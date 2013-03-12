@@ -15,7 +15,7 @@ Requirements
 ------------
 Runs inside the ESRI ArcGIS desktop suite.
 
-Usaage
+Usage
 ------
 1. Copy the .tbx file and the .py file to any local directory
 2. With ArcGIS desktop software running (e.g. ArcCatalog), add the .tbx file to your tool box by right clicking and choosing 'Add Toolbox'.
@@ -37,4 +37,6 @@ Issues
 ------
 * Need to work on error trapping a bit more
 * This does not handle blob fields, or raster fields
+* Need to document python version; not sure how compatible it is with all current versions
+* Developed in ArcGIS 10.0
 
