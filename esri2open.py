@@ -13,9 +13,10 @@ from arcpy import env
 import sys, string, os, math
 
 #global variables
-theIF = "C:/Users/michael.byrne/opendata/fcc_shape/vpc.shp"
-theOF = "C:/Users/michael.byrne/opendata/vpc.json"
-theOType = "geoJson" # "csv", "geoJson"
+#need to rewite to connect to a toolbox and accept arguments
+theIF = "C:/Users/opendata/fcc_shape/vpc.shp"
+theOF = "C:/Users/opendata/vpc.json"
+theOType = "geoJson" # "csv", "Json", "geoJson"
 theDelim = "`"
 
 ##Function wrtiteCSV - for each row, writes out each field w/ a delimiter
