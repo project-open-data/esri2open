@@ -14,8 +14,8 @@ import sys, string, os, math
 
 #global variables
 #need to rewite to connect to a toolbox and accept arguments
-theIF = "C:/Users/opendata/fcc_shape/vpc.shp"
-theOF = "C:/Users/opendata/vpc.json"
+theIF = "C:/Users/michael.byrne/opendata/testdata/poly_test.shp"
+theOF = "C:/Users/michael.byrne/opendata/poly_test.json"
 theOType = "geoJson" # "csv", "Json", "geoJson"
 theDelim = "`"
 
@@ -32,10 +32,11 @@ def wrtiteCSV(myOF):
              #no spaces before or after it
              if myF.type == "String":
                  myStr = myStr + \
-                       str(row.getValue(myF.name).encode('utf-8')).strip() + theDelim
+                       str(row.getValue(myF.name).encode('utf-8')).strip()\
+                          + theDelim
              #if it is a number type field, no need to quote it; keep it as a number
              if (myF.type == "Float") or (myF.type == "Double") or \
-                      (myF.type == "Short") or (myF.type == "Long") or \
+                      (myF.type == "Short") or (myF.type == "Integer") or \
                       (myF.type == "OID"):
                  myStr = myStr + str(row.getValue(myF.name)) + theDelim 
              #if it is a date field, make sure there are no spaces before/after
@@ -53,7 +54,7 @@ def wrtiteCSV(myOF):
 
 
 ##Function wrtiteJSON - for each row, writes out a JSON Object
-##
+##right now does not deal w/ multi-part points
 ##has one argument;  the name of the output file 
 def wrtiteJSON(myOF):
     #go open up and read this table
@@ -92,7 +93,7 @@ def wrtiteJSON(myOF):
                      myStr = myStr + '""'
              #if it is a number type field, no need to quote it; keep it as a number
              if (myF.type == "Float") or (myF.type == "Double")  \
-                      or (myF.type == "Short") or (myF.type == "Long") \
+                      or (myF.type == "Short") or (myF.type == "Integer") \
                       or (myF.type == "OID"):
                  if row.getValue(myF.name) <> None:
                      myStr = myStr + str(row.getValue(myF.name))
@@ -133,6 +134,7 @@ def wrtiteJSON(myOF):
     myFile.write("]}" + "\n")
     myFile.close()
     del myStr, myF, myFile, myOF, cnt
+    del myFcnt, fCnt, myField, myGeomStr
     del row
     return()
 
@@ -146,34 +148,93 @@ def writeGeom(myGeom):
         if myGeom.type == "point": #then write out the simple point attributes
             myGeomStr = myGeomStr + '"Point", "coordinates": ['
             myGeomStr = myGeomStr + str(myGeom.getPart().X) + ", " 
-            myGeomStr = myGeomStr + str(myGeom.getPart().Y) + "] } "
+            myGeomStr = myGeomStr + str(myGeom.getPart().Y) + "] "
         #then write out the simple polygon features;  
         #currently not supportinginside rings
         if myGeom.type == "polygon": 
             #initialize the coordinates object
             myGeomStr = myGeomStr + '"Polygon", "coordinates": [['
             #set up a geometry part counting variable
-            partcnt = 0
+            partnum = 0
             for part in myGeom:
-                for pnt in myGeom.getPart(partcnt):
-                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", " + str(pnt.Y) + "],"
-                partcnt = partcnt + 1
+                for pnt in myGeom.getPart(partnum):
+                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", "\
+                              + str(pnt.Y) + "],"
+                partnum = partnum + 1
             myLen = len(myGeomStr) - 1
-            myGeomStr = myGeomStr[:myLen] + "]] }"
+            myGeomStr = myGeomStr[:myLen] + "]] "
+            del myLen, partnum, part, pnt
         if myGeom.type == "polyline": #then write out the simple line features
             myGeomStr = myGeomStr + '"LineString", "coordinates": ['
-            partcnt = 0
+            partnum = 0
             for part in myGeom:
-                for pnt in myGeom.getPart(partcnt):
-                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", " + str(pnt.Y) + "],"
-                partcnt = partcnt + 1
+                for pnt in myGeom.getPart(partnum):
+                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", "\
+                              + str(pnt.Y) + "],"
+                partnum = partnum + 1
             myLen = len(myGeomStr) - 1
-            myGeomStr = myGeomStr[:myLen] + "] }"
+            myGeomStr = myGeomStr[:myLen] + "] "
+            del myLen, partnum, part, pnt    
 
     if myGeom.isMultipart == 1: #then it is multipart geometry
-  arcpy.AddMessage("This code is currently not supporting multi-part features")
-        #force an error as multi-parts are not supported
-    del myGeom
+        if myGeom.type == "point": 
+            arcpy.AddMessage("haven't written the multi-point yet")
+
+    if myGeom.isMultipart == 1: #then it is multipart geometry
+        if myGeom.type == "polygon": 
+            #initialize the coordinates object for the geoJson file
+            myGeomStr = myGeomStr + '"MultiPolygon", "coordinates": [[['
+            #set up a geometry part counting variable
+            partnum = 0
+            partcount = myGeom.partCount
+            while partnum < int(partcount):
+                part = myGeom.getPart(partnum)
+                pnt = part.next()
+                pntcnt = 0
+                while pnt:
+                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", "\
+                              + str(pnt.Y) + "],"
+                    pnt = part.next()
+                    pntcnt = pntcnt + 1
+                    if not pnt:
+                        pnt = part.next()
+                        if pnt:
+                            arcpy.AddMessage("    interior ring found")
+                myLen = len(myGeomStr) - 1
+                myGeomStr = myGeomStr[:myLen] + "]],[["
+                partnum = partnum + 1
+            myLen = len(myGeomStr) - 3 
+            myGeomStr = myGeomStr[:myLen] + "]"
+        del partnum, parcount, part, pnt, pntcnt    
+
+    if myGeom.isMultipart == 1: #then it is multipart geometry
+        if myGeom.type == "polyline": 
+            #initialize the coordinates object for the geoJson file
+            myGeomStr = myGeomStr + '"MultiLineString", "coordinates": [[['
+            #set up a geometry part counting variable
+            partnum = 0
+            partcount = myGeom.partCount
+            while partnum < int(partcount):
+                part = myGeom.getPart(partnum)
+                pnt = part.next()
+                pntcnt = 0
+                while pnt:
+                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", "\
+                              + str(pnt.Y) + "],"
+                    pnt = part.next()
+                    pntcnt = pntcnt + 1
+                    if not pnt:
+                        pnt = part.next()
+                        if pnt:
+                            arcpy.AddMessage("    interior ring found")
+                myLen = len(myGeomStr) - 1
+                myGeomStr = myGeomStr[:myLen] + "]],[["
+                partnum = partnum + 1
+            myLen = len(myGeomStr) - 3 
+            myGeomStr = myGeomStr[:myLen] + "]"
+        del partnum, parcount, part, pnt, pntcnt
+    myGeomStr = myGeomStr + " } "
+    del myGeom 
     return(myGeomStr)
 
 ##Function prepJSonFile preps the file for writing to a JSON file type
@@ -194,9 +255,10 @@ def prepJSonFile (myOF):
 def prepCSVFile (myOF):
     myStr = ""
     for myF in arcpy.ListFields(theIF):  #only create data for field types that make sense
-        if (myF.type == "String") or (myF.type == "Float") or (myF.type == "Double") \
-              or (myF.type == "Short") or (myF.type == "Long") or (myF.type == "OID")\
-              or (myF.type == "Date"):
+        if (myF.type == "String") or (myF.type == "Float") or\
+           (myF.type == "Double") or (myF.type == "Short") or\
+           (myF.type == "Integer") or (myF.type == "OID") or\
+           (myF.type == "Date"):
            myStr = myStr + myF.name + theDelim
     myLen = len(myStr) - 1
     myStr = myStr[:myLen]
