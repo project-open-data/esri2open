@@ -1,11 +1,11 @@
 esri2open
 =========
 
-This repo is an ESRI toolbox and tool(s) that export ESRI Feature Classes to open data formats, CSV, JSON, and GeoJSON.
+This repo is an ESRI toolbox and tool(s) that exports ESRI Feature Classes to open data formats, CSV, JSON, and GeoJSON.
 
 What Problem This Solves
 ------------------------
-Much of the data in government coffers is contained in spatial databases.  A large percentage of government spatial data is ESRI software.  While the common interchange format, the ESRI Shapefile, is easily exported and imported by many other softwares, this data file format (the Shapefile) is not intrinsically part of the www ecology.  Moreover, ESRI software does not provide an export of its generic 'feature class' (shapefile, file geodatabase, and personal geodatabase) to the most common open data file formats, CSV, JSON, and/or GeoJSON.  Finally while open source tools easily transform ESRI shapefiles to open data, most government geospatial infrastructures only have ESRI tools.  Lacking this basic export feature presented here then, the lion share of government spatial data users cannot export their data to the most common open data formats.
+Much of the data in government coffers is contained in spatial databases.  A large percentage of government spatial data is ESRI software.  While the common interchange format, the ESRI Shapefile, is easily exported and imported by many other softwares, this data file format (the Shapefile) is not intrinsically part of the www ecology.  Moreover, ESRI software does not provide an export of its generic 'feature class' (shapefile, file geodatabase, and personal geodatabase) to the most common open data file formats, CSV, JSON, and/or GeoJSON.  Finally while open source tools easily transform ESRI shapefiles to open data, most government geospatial infrastructures only have ESRI tools.  Lacking this basic export feature presented here, means the lion share of government spatial data users cannot export their data to the most common open data formats.
 
 How This Solves It
 ------------------
