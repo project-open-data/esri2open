@@ -26,7 +26,7 @@ Arguments
 ---------
 * `Feature Class`: the name of the Feature Class you wish to export
 * `Output Location`: the folder location where the output file will be generated
-* `CSV|JSON|GeoJSON`: file type you wish to create
+* `CSV|JSON|GeoJSON`: file type you wish to create; Default is GeoJSON
 * `Delimiter`: Optional - if you select CSV, you will need to select a delimiter; the default is "|"
 
 License
@@ -35,8 +35,6 @@ GPLv3 or later.
 
 Issues
 ------
-* Still need to finish up the file management aspect of the code base
 * Need to work on error trapping a bit more
 * This does not handle blob fields, or raster fields
-* Still need to work out multipart features
 
