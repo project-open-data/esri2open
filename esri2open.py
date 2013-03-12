@@ -12,12 +12,17 @@ import arcpy
 from arcpy import env
 import sys, string, os, math
 
+
+##set up arguments
+#acquire arguments
+theIF = sys.argv[1]  #the input Feature Class
+theOF = sys.argv[2]  #the output folder (output file will have same prefix
+                     #as the input feature class w/ extension for the 
+                     #output file type
+theOType = sys.argv[3]  #the output file type CSV or JSON or GeoJSON
+theDelim = sys.argv[4] #the delimiter for the csv output selection
+
 #global variables
-#need to rewite to connect to a toolbox and accept arguments
-theIF = "C:/Users/michael.byrne/opendata/testdata/poly_test.shp"
-theOF = "C:/Users/michael.byrne/opendata/poly_test.json"
-theOType = "geoJson" # "csv", "Json", "geoJson"
-theDelim = "`"
 
 ##Function wrtiteCSV - for each row, writes out each field w/ a delimiter
 ##right now does not deal w/ geometry, blob, or rasters
@@ -76,7 +81,7 @@ def wrtiteJSON(myOF):
              fCnt = int(len(arcpy.ListFields(theIF)))
              #if you are a shape field, so something special w/ it
              if myF.name == "Shape": 
-                 if theOType == "geoJson":
+                 if theOType == "GeoJSON":
                     myField = "geometry"
                     myGeomStr = myGeomStr + writeGeom(row.getValue(myF.name))
              else: #otherwise, just write up the attribues as "properties"
@@ -117,7 +122,7 @@ def wrtiteJSON(myOF):
         #if its not the last row, then add then end of row brackets and comma
         if cnt < theCnt :
             #if if the oType is a geoJson file, append the geomStr
-            if theOType == "geoJson":  
+            if theOType == "GeoJSON":  
                 myFile.write(myStr + "}, " + myGeomStr + "}," + "\n")
             #if the oType is Json, don't append the geomStr
             else:
@@ -125,7 +130,7 @@ def wrtiteJSON(myOF):
         #if it is the last row then just add the ending brackets
         else:   
             #if if the oType is a geoJson file, append the geomStr
-            if theOType == "geoJson":  
+            if theOType == "GeoJSON":  
                 myFile.write(myStr + "}, " + myGeomStr + "} \n")
             #if the oType is Json, don't append the geomStr
             else:
@@ -177,10 +182,20 @@ def writeGeom(myGeom):
             del myLen, partnum, part, pnt    
 
     if myGeom.isMultipart == 1: #then it is multipart geometry
-        if myGeom.type == "point": 
-            arcpy.AddMessage("haven't written the multi-point yet")
+        if myGeom.type == "multipoint":
+            #initialize the coordinates object for the geoJson file
+            myGeomStr = myGeomStr + '"MultiPoint", "coordinates": ['
+            partnum = 0
+            partcount = myGeom.partCount
+            while partnum < partcount:
+                pnt = myGeom.getPart(partnum)
+                myGeomStr = myGeomStr + "[" + str(pnt.X) + ", " 
+                myGeomStr = myGeomStr + str(pnt.Y) + "],"
+                partnum = partnum + 1
+            myLen = len(myGeomStr) - 1
+            myGeomStr = myGeomStr[:myLen] + "]"
+            del partnum, partcount, pnt
 
-    if myGeom.isMultipart == 1: #then it is multipart geometry
         if myGeom.type == "polygon": 
             #initialize the coordinates object for the geoJson file
             myGeomStr = myGeomStr + '"MultiPolygon", "coordinates": [[['
@@ -205,12 +220,11 @@ def writeGeom(myGeom):
                 partnum = partnum + 1
             myLen = len(myGeomStr) - 3 
             myGeomStr = myGeomStr[:myLen] + "]"
-        del partnum, parcount, part, pnt, pntcnt    
+            del partnum, partcount, part, pnt, pntcnt    
 
-    if myGeom.isMultipart == 1: #then it is multipart geometry
         if myGeom.type == "polyline": 
             #initialize the coordinates object for the geoJson file
-            myGeomStr = myGeomStr + '"MultiLineString", "coordinates": [[['
+            myGeomStr = myGeomStr + '"MultiLineString", "coordinates": [['
             #set up a geometry part counting variable
             partnum = 0
             partcount = myGeom.partCount
@@ -228,11 +242,11 @@ def writeGeom(myGeom):
                         if pnt:
                             arcpy.AddMessage("    interior ring found")
                 myLen = len(myGeomStr) - 1
-                myGeomStr = myGeomStr[:myLen] + "]],[["
+                myGeomStr = myGeomStr[:myLen] + "],["
                 partnum = partnum + 1
-            myLen = len(myGeomStr) - 3 
+            myLen = len(myGeomStr) - 2
             myGeomStr = myGeomStr[:myLen] + "]"
-        del partnum, parcount, part, pnt, pntcnt
+            del partnum, partcount, part, pnt, pntcnt
     myGeomStr = myGeomStr + " } "
     del myGeom 
     return(myGeomStr)
@@ -272,6 +286,13 @@ def prepCSVFile (myOF):
 ##################Main Code below
 #****************************************************************************
 try: 
+    #make sure variables are set
+    if theDelim == None:
+        theDelim = "|"
+    #get the file prefix by truncating the featureclass
+    theOF = theOF + "/" + str(os.path.splitext(os.path.basename(theIF))[0])\
+          + "." + theOType.lower()
+    arcpy.AddMessage(theOF)
     #get a count of all rows in the feature class
     theCnt = int(arcpy.GetCount_management(theIF).getOutput(0))
     #message to the end user what you are going to do
@@ -280,11 +301,11 @@ try:
     arcpy.AddMessage("     to the file " + theOF)
     arcpy.AddMessage("     as a " + theOType + " file")
     #if the output type is csv, write a csv
-    if theOType == "csv":
+    if theOType == "CSV":
         prepCSVFile(theOF)
         wrtiteCSV(theOF)
     #if the output type is json, or geojson, write a json file
-    if (theOType == "Json") or (theOType == "geoJson"):
+    if (theOType == "JSON") or (theOType == "GeoJSON"):
         prepJSonFile(theOF)
         wrtiteJSON(theOF)
 except:
