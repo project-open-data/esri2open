@@ -109,7 +109,7 @@ def wrtiteJSON(myOF):
                 
                 # The json module handles UTF-8 encoding and everything for
                 # you, and at C speed.
-                myStr += json.dump(properties)
+                myStr += json.dumps(properties)
 
              ##############################################
              #need to deal , blob, and raster at some point
