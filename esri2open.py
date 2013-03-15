@@ -10,6 +10,7 @@
 # Import system modules
 import arcpy
 from arcpy import env
+import json
 import sys, string, os, math
 
 
@@ -72,45 +73,44 @@ def wrtiteJSON(myOF):
         #this code sets the geometry object for geoJson at the end of the line 
         #the attributes or properties
         myGeomStr = ""  
-        myStr = '{"type": "Feature", "id": ' + str(cnt) + ', "properties": {'
-        #for each field in the feature class input
+        myStr = '{"type": "Feature", "id": ' + str(cnt) + ', "properties": '
+        
+        # for each field in the feature class input
+        properties = {}
         for myF in arcpy.ListFields(theIF):
-             #first get the number of fields in this feature class
-             #this helps establish the end of the list so we can close
-             #the json object well
-             fCnt = int(len(arcpy.ListFields(theIF)))
-             #if you are a shape field, so something special w/ it
-             if myF.name == "Shape": 
-                 if theOType == "GeoJSON":
+            
+            #if you are a shape field, so something special w/ it
+            if myF.name == "Shape": 
+                if theOType == "GeoJSON": # avoid globals!
                     myField = "geometry"
                     myGeomStr = myGeomStr + writeGeom(row.getValue(myF.name))
-             else: #otherwise, just write up the attribues as "properties"
-                myField = myF.name.lower()
-                myStr = myStr + '"' + myField + '":'                  
-             #if it is a string type field, then make sure it is utf-8 and has
-             #no spaces before or after it
-             if myF.type == "String":
-                 if row.getValue(myF.name) <> None:
-                     myStr = myStr + '"' + \
-                           str(row.getValue(myF.name).encode('utf-8')).strip() \
-                           + '"'
-                 else: #handle for null fields
-                     myStr = myStr + '""'
-             #if it is a number type field, no need to quote it; keep it as a number
-             if (myF.type == "Float") or (myF.type == "Double")  \
-                      or (myF.type == "Short") or (myF.type == "Integer") \
-                      or (myF.type == "OID"):
-                 if row.getValue(myF.name) <> None:
-                     myStr = myStr + str(row.getValue(myF.name))
-                 else: #handle for null fields
-                     myStr = myStr + ''
-             #if it is a date field, make sure there are no spaces before/after
-             #and quote it
-             if (myF.type == "Date"):
-                 if row.getValue(myF.name) <> None:
-                     myStr = myStr + '"' + str(row.getValue(myF.name)).strip() + '"'
-                 else: #handle for null fields
-                     myStr = myStr + '""'
+            
+            else: #otherwise, just write up the attribues as "properties"
+                key = myF.name.lower()
+                val = row.getValue(myF.name)
+                if val is None:
+                    # skip this field
+                    continue 
+
+                if myF.type == "String":
+                    properties[key] = val.strip()
+                
+                if myF.type in ("Float", "Double", "Short", "Integer", "OID"):
+                    properties[key] = val
+                    
+                # if it is a date field, make sure there are no spaces before/after
+                # and quote it
+                #
+                # TODO: convert these to ISO 8601 datetime strings.
+                #
+             
+                if (myF.type == "Date"):
+                    properties[key] = '"%s"' % val.strip()
+                
+                # The json module handles UTF-8 encoding and everything for
+                # you, and at C speed.
+                myStr += json.dump(properties)
+
              ##############################################
              #need to deal , blob, and raster at some point
              ##############################################
@@ -131,17 +131,13 @@ def wrtiteJSON(myOF):
         else:   
             #if if the oType is a geoJson file, append the geomStr
             if theOType == "GeoJSON":  
-                myFile.write(myStr + "}, " + myGeomStr + "} \n")
+                myFile.write(myStr + ", " + myGeomStr + "} \n")
             #if the oType is Json, don't append the geomStr
             else:
                 myFile.write(myStr + "} " + "} \n")
         cnt = cnt + 1
     myFile.write("]}" + "\n")
     myFile.close()
-    del myStr, myF, myFile, myOF, cnt
-    del myFcnt, fCnt, myField, myGeomStr
-    del row
-    return()
 
 ##Function writeGeom - writes out the geometry object to text
 ##has one argument; first is for the geometry object itelself, 
