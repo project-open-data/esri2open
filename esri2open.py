@@ -5,6 +5,9 @@
 # Federal Communications Commission
 # exports the feature classes for any feature class to
 # a csv file, JSON file or geoJSON file 
+# also adding edits from sgillies and shaun Shaun Walbridge
+# updates include using the pythong json.dumps method and indentation issues
+# edits made 3/19/2013
 # ---------------------------------------------------------------------------
 
 # Import system modules
@@ -78,12 +81,12 @@ def wrtiteJSON(myOF):
         # for each field in the feature class input
         properties = {}
         for myF in arcpy.ListFields(theIF):
-            
+            fCnt = int(len(arcpy.ListFields(theIF)))    
             #if you are a shape field, so something special w/ it
             if myF.name == "Shape": 
                 if theOType == "GeoJSON": # avoid globals!
                     myField = "geometry"
-                    myGeomStr = myGeomStr + writeGeom(row.getValue(myF.name))
+                    myGeomStr = myGeomStr + writeGeom(row.getValue(myF.name)) + "}"
             
             else: #otherwise, just write up the attribues as "properties"
                 key = myF.name.lower()
@@ -98,43 +101,34 @@ def wrtiteJSON(myOF):
                 if myF.type in ("Float", "Double", "Short", "Integer", "OID"):
                     properties[key] = val
                     
-                # if it is a date field, make sure there are no spaces before/after
-                # and quote it
-                #
                 # TODO: convert these to ISO 8601 datetime strings.
-                #
-             
                 if (myF.type == "Date"):
                     properties[key] = '"%s"' % val.strip()
                 
                 # The json module handles UTF-8 encoding and everything for
                 # you, and at C speed.
-                myStr += json.dumps(properties)
 
-             ##############################################
-             #need to deal , blob, and raster at some point
-             ##############################################
-             #if its not the last field and not Shape, then add comma, 
-             #so it can continue appending fields
-             if (myFcnt < fCnt) and (myF.name <> "Shape"):
-                  myStr = myStr + ", "
-             myFcnt = myFcnt + 1
-        #if its not the last row, then add then end of row brackets and comma
+            ##############################################
+            #need to deal , blob, and raster at some point
+            ##############################################
+
+        myStr += json.dumps(properties)
+        #if its not the last row, then add a comma
         if cnt < theCnt :
             #if if the oType is a geoJson file, append the geomStr
             if theOType == "GeoJSON":  
-                myFile.write(myStr + "}, " + myGeomStr + "}," + "\n")
+                myFile.write(myStr + ", " + myGeomStr + "," + "\n")
             #if the oType is Json, don't append the geomStr
             else:
-                myFile.write(myStr + "} " + "}," + "\n")
+                myFile.write(myStr +  "}, \n") #"} " + "}," +
         #if it is the last row then just add the ending brackets
         else:   
             #if if the oType is a geoJson file, append the geomStr
             if theOType == "GeoJSON":  
-                myFile.write(myStr + ", " + myGeomStr + "} \n")
+                myFile.write(myStr + ", " + myGeomStr + " \n")
             #if the oType is Json, don't append the geomStr
             else:
-                myFile.write(myStr + "} " + "} \n")
+                myFile.write(myStr + "} \n")
         cnt = cnt + 1
     myFile.write("]}" + "\n")
     myFile.close()
