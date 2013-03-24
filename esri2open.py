@@ -5,8 +5,8 @@
 # Federal Communications Commission
 # exports the feature classes for any feature class to
 # a csv file, JSON file or geoJSON file 
-# also adding edits from sgillies and shaun Shaun Walbridge
-# updates include using the pythong json.dumps method and indentation issues
+# also adding edits from sgillies and Shaun Walbridge
+# updates include using the python json.dumps method and indentation issues
 # edits made 3/19/2013
 # ---------------------------------------------------------------------------
 
