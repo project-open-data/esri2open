@@ -7,296 +7,332 @@
 # a csv file, JSON file or geoJSON file 
 # also adding edits from sgillies and Shaun Walbridge
 # updates include using the python json.dumps method and indentation issues
-# edits made 3/19/2013
+# Edit by Calvin Metcalf to merge in improvments made for exporting
+# Massachusetts Department Of Transportation Data
+# edits made 4/3/2013
 # ---------------------------------------------------------------------------
+from arcpy import ListFields,Describe, SetProgressorLabel,SetProgressorPosition,GetCount_management,SetProgressor,AddMessage,SpatialReference,SearchCursor
+from csv import DictWriter
+from json import dump
+#uncomment the following line and comment the final line to use in the console
+#arcpy.env.workspace = os.getcwd()
+wgs84="GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]];-400 -400 1000000000;-100000 10000;-100000 10000;8.98315284119522E-09;0.001;0.001;IsHighPrecision"
 
-# Import system modules
-import arcpy
-from arcpy import env
-import json
-import sys, string, os, math
-
-
-##set up arguments
-#acquire arguments
-theIF = sys.argv[1]  #the input Feature Class
-theOF = sys.argv[2]  #the output folder (output file will have same prefix
-                     #as the input feature class w/ extension for the 
-                     #output file type
-theOType = sys.argv[3]  #the output file type CSV or JSON or GeoJSON
-theDelim = sys.argv[4] #the delimiter for the csv output selection
-
-#global variables
-
-##Function wrtiteCSV - for each row, writes out each field w/ a delimiter
-##right now does not deal w/ geometry, blob, or rasters
-##has one argument; the name of the output file
-def wrtiteCSV(myOF):
-    #go open up and read this table
-    myFile = open(myOF, 'a')  #open the output file and append to it
-    for row in arcpy.SearchCursor(theIF):  #use a search cursor for each row
-        myStr = ""
-        for myF in arcpy.ListFields(theIF):
-             #if it is a string type field, then make sure it is utf-8 and has
-             #no spaces before or after it
-             if myF.type == "String":
-                 myStr = myStr + \
-                       str(row.getValue(myF.name).encode('utf-8')).strip()\
-                          + theDelim
-             #if it is a number type field, no need to quote it; keep it as a number
-             if (myF.type == "Float") or (myF.type == "Double") or \
-                      (myF.type == "Short") or (myF.type == "Integer") or \
-                      (myF.type == "OID"):
-                 myStr = myStr + str(row.getValue(myF.name)) + theDelim 
-             #if it is a date field, make sure there are no spaces before/after
-             #and quote it
-             if (myF.type == "Date"):
-                 myStr = myStr + str(row.getValue(myF.name)).strip() + theDelim
-             #need to deal , blob, and raster
-        myLen = len(myStr) - 1
-        myStr = myStr[:myLen]
-        myFile.write(myStr +  "\n")
-    myFile.close()
-    del myLen, myStr, myF, myFile, myOF
-    del row
-    return()
-
-
-##Function wrtiteJSON - for each row, writes out a JSON Object
-##right now does not deal w/ multi-part points
-##has one argument;  the name of the output file 
-def wrtiteJSON(myOF):
-    #go open up and read this table
-    myFile = open(myOF, 'a')
-    cnt = 1 #used to determine the end of the rows
-    #for each row in the feature class input
-    for row in arcpy.SearchCursor(theIF):
-        myFcnt = 1
-        #the next line initializes the variable myGeomStr so that it is available
-        #this code sets the geometry object for geoJson at the end of the line 
-        #the attributes or properties
-        myGeomStr = ""  
-        myStr = '{"type": "Feature", "id": ' + str(cnt) + ', "properties": '
-        
-        # for each field in the feature class input
-        properties = {}
-        for myF in arcpy.ListFields(theIF):
-            fCnt = int(len(arcpy.ListFields(theIF)))    
-            #if you are a shape field, so something special w/ it
-            if myF.name == "Shape": 
-                if theOType == "GeoJSON": # avoid globals!
-                    myField = "geometry"
-                    myGeomStr = myGeomStr + writeGeom(row.getValue(myF.name)) + "}"
-            
-            else: #otherwise, just write up the attribues as "properties"
-                key = myF.name.lower()
-                val = row.getValue(myF.name)
-                if val is None:
-                    # skip this field
-                    continue 
-
-                if myF.type == "String":
-                    properties[key] = val.strip()
-                
-                if myF.type in ("Float", "Double", "Short", "Integer", "OID"):
-                    properties[key] = val
-                    
-                # TODO: convert these to ISO 8601 datetime strings.
-                if (myF.type == "Date"):
-                    properties[key] = '"%s"' % val.strip()
-                
-                # The json module handles UTF-8 encoding and everything for
-                # you, and at C speed.
-
-            ##############################################
-            #need to deal , blob, and raster at some point
-            ##############################################
-
-        myStr += json.dumps(properties)
-        #if its not the last row, then add a comma
-        if cnt < theCnt :
-            #if if the oType is a geoJson file, append the geomStr
-            if theOType == "GeoJSON":  
-                myFile.write(myStr + ", " + myGeomStr + "," + "\n")
-            #if the oType is Json, don't append the geomStr
+def listFields(featureClass):
+    fields=ListFields(featureClass)
+    out=dict()
+    for fld in fields:
+        out[fld.name]=fld.type
+    return out
+def getShp(shp):
+    desc = Describe(shp)
+    return [desc.ShapeFieldName,desc.shapeType.lower()]
+def getOID(fields):
+    for key, value in fields.items():
+        if value== u'OID':
+            return key
+def statusMessage(total,current,last):
+    newPercent = int((current*100)/total)
+    if newPercent == last:
+        return last
+    else:
+        SetProgressorLabel("{0}% done".format(str(newPercent)))
+        SetProgressorPosition(newPercent)
+        return newPercent
+def parseProp(row,fields, shp):
+    out=dict()
+    for field in fields:
+        if (fields[field] != u'OID') and field.lower() not in ('shape_length','shape_area','shape.len','shape.length','shape_len','shape.area',shp.lower()) and row.getValue(field) is not None:
+            if fields[field] == "Date":
+                value = str(row.getValue(field).date())
+            elif fields[field] == "String":
+                value = row.getValue(field).strip()
             else:
-                myFile.write(myStr +  "}, \n") #"} " + "}," +
-        #if it is the last row then just add the ending brackets
-        else:   
-            #if if the oType is a geoJson file, append the geomStr
-            if theOType == "GeoJSON":  
-                myFile.write(myStr + ", " + myGeomStr + " \n")
-            #if the oType is Json, don't append the geomStr
+                value = row.getValue(field)
+            if value != "":
+                out[field]=value
+    return out
+def parseLineGeom(line):
+    out=[]
+    lineCount=line.count
+    if lineCount ==1:
+        return ["Point",[line[0].X,line[0].Y]]
+    i=0
+    while i<lineCount:
+        pt=line[i]
+        out.append([pt.X,pt.Y])
+        i+=1
+    if len(out)==2 and out[0]==out[1]:
+        return ["Point",out[0]]
+    return ["LineString",out]
+def parsePolyGeom(poly):
+    out=[]
+    polyCount=poly.count
+    i=0
+    polys=[]
+    while i<polyCount:
+        pt=poly[i]
+        if pt:
+            out.append([pt.X,pt.Y])
+        else:
+            polys.append(out)
+            out=[]
+        i+=1
+    polys.append(out)
+    if len(polys[0])==3:
+        return ["LineString", polys[0][:2]]
+    if len(polys[0])<3:
+        return ["Point",polys[0][0]]
+    return ["Polygon",polys]
+def parsePoint(geometry):
+    geo=dict()
+    geo["type"]="Point"
+    geo["coordinates"]=[geometry.firstPoint.X,geometry.firstPoint.Y]
+    return geo
+def parseMultiPoint(geometry):
+    if geometry.pointCount == 1:
+        return parsePoint(geometry)
+    else:
+        geo=dict()
+        geo["type"]="MultiPoint"
+        points=[]
+        pointCount=geometry.pointCount
+        i=0
+        while i<pointCount:
+            point=geometry.getPart(i)
+            points.append([point.X,point.Y])
+            i+=1
+        geo["coordinates"]=points
+        return geo
+def parseLineString(geometry):
+    geo=dict()
+    outLine=parseLineGeom(geometry.getPart(0))
+    geo["type"]=outLine[0]
+    geo["coordinates"]=outLine[1]
+    return geo
+def parseMultiLineString(geometry):
+    if geometry.partCount==1:
+        return parseLineString(geometry)
+    else:
+        lineGeo=dict()
+        points=[]
+        lines=[]
+        lineCount=geometry.partCount
+        i=0
+        while i<lineCount:
+            outLine = parseLineGeom(geometry.getPart(i))
+            if outLine[0]=="LineString":
+                lines.append(outLine[1])
+            elif outLine[1]=="Point":
+                points.append(outLine[1])
+            i+=1
+        if lines:
+            if len(lines)==1:
+                lineGeo["type"]="LineString"
+                lineGeo["coordinates"]=lines[0]
             else:
-                myFile.write(myStr + "} \n")
-        cnt = cnt + 1
-    myFile.write("]}" + "\n")
-    myFile.close()
-
-##Function writeGeom - writes out the geometry object to text
-##has one argument; first is for the geometry object itelself, 
-##myStr gets concatenated and returned
-def writeGeom(myGeom):
-    #initialize the geometry object 
-    myGeomStr = '"geometry": { "type": ' 
-    if myGeom.isMultipart == 0:  #then it is simple geometry
-        if myGeom.type == "point": #then write out the simple point attributes
-            myGeomStr = myGeomStr + '"Point", "coordinates": ['
-            myGeomStr = myGeomStr + str(myGeom.getPart().X) + ", " 
-            myGeomStr = myGeomStr + str(myGeom.getPart().Y) + "] "
-        #then write out the simple polygon features;  
-        #currently not supportinginside rings
-        if myGeom.type == "polygon": 
-            #initialize the coordinates object
-            myGeomStr = myGeomStr + '"Polygon", "coordinates": [['
-            #set up a geometry part counting variable
-            partnum = 0
-            for part in myGeom:
-                for pnt in myGeom.getPart(partnum):
-                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", "\
-                              + str(pnt.Y) + "],"
-                partnum = partnum + 1
-            myLen = len(myGeomStr) - 1
-            myGeomStr = myGeomStr[:myLen] + "]] "
-            del myLen, partnum, part, pnt
-        if myGeom.type == "polyline": #then write out the simple line features
-            myGeomStr = myGeomStr + '"LineString", "coordinates": ['
-            partnum = 0
-            for part in myGeom:
-                for pnt in myGeom.getPart(partnum):
-                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", "\
-                              + str(pnt.Y) + "],"
-                partnum = partnum + 1
-            myLen = len(myGeomStr) - 1
-            myGeomStr = myGeomStr[:myLen] + "] "
-            del myLen, partnum, part, pnt    
-
-    if myGeom.isMultipart == 1: #then it is multipart geometry
-        if myGeom.type == "multipoint":
-            #initialize the coordinates object for the geoJson file
-            myGeomStr = myGeomStr + '"MultiPoint", "coordinates": ['
-            partnum = 0
-            partcount = myGeom.partCount
-            while partnum < partcount:
-                pnt = myGeom.getPart(partnum)
-                myGeomStr = myGeomStr + "[" + str(pnt.X) + ", " 
-                myGeomStr = myGeomStr + str(pnt.Y) + "],"
-                partnum = partnum + 1
-            myLen = len(myGeomStr) - 1
-            myGeomStr = myGeomStr[:myLen] + "]"
-            del partnum, partcount, pnt
-
-        if myGeom.type == "polygon": 
-            #initialize the coordinates object for the geoJson file
-            myGeomStr = myGeomStr + '"MultiPolygon", "coordinates": [[['
-            #set up a geometry part counting variable
-            partnum = 0
-            partcount = myGeom.partCount
-            while partnum < int(partcount):
-                part = myGeom.getPart(partnum)
-                pnt = part.next()
-                pntcnt = 0
-                while pnt:
-                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", "\
-                              + str(pnt.Y) + "],"
-                    pnt = part.next()
-                    pntcnt = pntcnt + 1
-                    if not pnt:
-                        pnt = part.next()
-                        if pnt:
-                            arcpy.AddMessage("    interior ring found")
-                myLen = len(myGeomStr) - 1
-                myGeomStr = myGeomStr[:myLen] + "]],[["
-                partnum = partnum + 1
-            myLen = len(myGeomStr) - 3 
-            myGeomStr = myGeomStr[:myLen] + "]"
-            del partnum, partcount, part, pnt, pntcnt    
-
-        if myGeom.type == "polyline": 
-            #initialize the coordinates object for the geoJson file
-            myGeomStr = myGeomStr + '"MultiLineString", "coordinates": [['
-            #set up a geometry part counting variable
-            partnum = 0
-            partcount = myGeom.partCount
-            while partnum < int(partcount):
-                part = myGeom.getPart(partnum)
-                pnt = part.next()
-                pntcnt = 0
-                while pnt:
-                    myGeomStr = myGeomStr + "[" + str(pnt.X) + ", "\
-                              + str(pnt.Y) + "],"
-                    pnt = part.next()
-                    pntcnt = pntcnt + 1
-                    if not pnt:
-                        pnt = part.next()
-                        if pnt:
-                            arcpy.AddMessage("    interior ring found")
-                myLen = len(myGeomStr) - 1
-                myGeomStr = myGeomStr[:myLen] + "],["
-                partnum = partnum + 1
-            myLen = len(myGeomStr) - 2
-            myGeomStr = myGeomStr[:myLen] + "]"
-            del partnum, partcount, part, pnt, pntcnt
-    myGeomStr = myGeomStr + " } "
-    del myGeom 
-    return(myGeomStr)
-
-##Function prepJSonFile preps the file for writing to a JSON file type
-##has one argument, the output file
-def prepJSonFile (myOF):
-    myFile = open(theOF, 'w')    
-    myFile.write("{" + "\n")
-    myStr = '"type": "FeatureCollection",'
-    myFile.write(myStr + "\n")
-    myStr = '"features": ['
-    myFile.write(myStr + "\n")    
-    myFile.close()            
-    del myOF, myStr, myFile
-    return()
-
-##Function prepCSVFile preps the file for writing to a CSV file type
-##if the field is a geometry, blob, or raster, it does not write them out
-def prepCSVFile (myOF):
-    myStr = ""
-    for myF in arcpy.ListFields(theIF):  #only create data for field types that make sense
-        if (myF.type == "String") or (myF.type == "Float") or\
-           (myF.type == "Double") or (myF.type == "Short") or\
-           (myF.type == "Integer") or (myF.type == "OID") or\
-           (myF.type == "Date"):
-           myStr = myStr + myF.name + theDelim
-    myLen = len(myStr) - 1
-    myStr = myStr[:myLen]
-    myFile = open(myOF, 'w')    
-    myFile.write(myStr + "\n")
-    myFile.close()            
-    del myOF, myStr, myLen, myFile 
-    return()
-
-#****************************************************************************
-##################Main Code below
-#****************************************************************************
-try: 
-    #make sure variables are set
-    if theDelim == None:
-        theDelim = "|"
-    #get the file prefix by truncating the featureclass
-    theOF = theOF + "/" + str(os.path.splitext(os.path.basename(theIF))[0])\
-          + "." + theOType.lower()
-    arcpy.AddMessage(theOF)
-    #get a count of all rows in the feature class
-    theCnt = int(arcpy.GetCount_management(theIF).getOutput(0))
-    #message to the end user what you are going to do
-    arcpy.AddMessage("Going to write out " + str(theCnt) + " records ")
-    arcpy.AddMessage("     from feature class " + theIF)
-    arcpy.AddMessage("     to the file " + theOF)
-    arcpy.AddMessage("     as a " + theOType + " file")
-    #if the output type is csv, write a csv
-    if theOType == "CSV":
-        prepCSVFile(theOF)
-        wrtiteCSV(theOF)
-    #if the output type is json, or geojson, write a json file
-    if (theOType == "JSON") or (theOType == "GeoJSON"):
-        prepJSonFile(theOF)
-        wrtiteJSON(theOF)
-except:
-    arcpy.AddMessage("Something bad happened")
+                lineGeo["type"]="MultiLineString"
+                lineGeo["coordinates"]=lines
+        if points:
+            pointGeo={}
+            pointGeo["coordinates"]=points
+            if len(pointGeo["coordinates"])==1:
+                pointGeo["coordinates"]=pointGeo["coordinates"][0]
+                pointGeo["type"]="Point"
+            else:
+                pointGeo["type"]="MultiPoint"
+        if lines and not points:
+            return lineGeo
+        elif points and not lines:
+            return pointGeo
+        elif points and lines:
+            out = {}
+            out["type"]="GeometryCollection"
+            out["geometries"] = [pointGeo,lineGeo]
+            return out
+        else:
+            return {}
+def parsePolygon(geometry):
+    geo={}
+    outPoly = parsePolyGeom(geometry.getPart(0))
+    geo["type"]=outPoly[0]
+    geo["coordinates"]=outPoly[1]
+    return geo
+def parseMultiPolygon(geometry):
+    if geometry.partCount==1:
+        return parsePolygon(geometry)
+    else:
+        polys=[]
+        lines=[]
+        points=[]
+        polyCount=geometry.partCount
+        i=0
+        while i<polyCount:
+            polyPart = parsePolyGeom(geometry.getPart(i))
+            if polyPart[0]=="Polygon":
+                polys.append(polyPart[1])
+            elif polyPart[0]=="Point":
+                points.append(polyPart[1])
+            elif polyPart[0]=="LineString":
+                lines.append(polyPart[1])
+            i+=1
+        num = 0
+        if polys:
+            polyGeo={}
+            num+=1
+            polyGeo["coordinates"]=polys
+            if len(polyGeo["coordinates"])==1:
+                polyGeo["coordinates"]=polyGeo["coordinates"][0]
+                polyGeo["type"]="Polygon"
+            else:
+                polyGeo["type"]="MultiPolygon"
+        if points:
+            num+=1
+            pointGeo={}
+            pointGeo["coordinates"]=points
+            if len(pointGeo["coordinates"])==1:
+                pointGeo["coordinates"]=pointGeo["coordinates"][0]
+                pointGeo["type"]="Point"
+            else:
+                pointGeo["type"]="MultiPoint"
+        if lines:
+            num+=1
+            lineGeo={}
+            lineGeo["coordinates"]=lineGeo
+            if len(lineGeo["coordinates"])==1:
+                lineGeo["coordinates"]=lineGeo["coordinates"][0]
+                pointGeo["type"]="LineString"
+            else:
+                pointGeo["type"]="MultiLineString"
+        if polys and not points and not lines:
+            return polyGeo
+        elif points and not polys and not lines:
+            return pointGeo
+        elif lines and not polys and not points:
+            return lineGeo
+        elif num>1:
+            out = {}
+            out["type"]="GeometryCollection"
+            outGeo = []
+            if polys:
+                outGeo.append(polyGeo)
+            if points:
+                outGeo.append(pointGeo)
+            if lines:
+                outGeo.append(lineGeo)
+            out["geometries"]=outGeo
+            return out
+        else:
+            return {}
+def parseMultiPatch():
+    return {}
+def prepareGeoJson(out):
+    out.write("""{"type":"FeatureCollection","features":[""")
+    return out
+def prepareJson(out):
+    out.write("""{"rows":[""")
+    return out
+def prepareCsv(out,featureClass,fileType,includeGeometry):
+    shp=getShp(featureClass)[0]
+    fields=listFields(featureClass)
+    fieldNames = []
+    for field in fields:
+        if (fields[field] != u'OID') and field.lower() not in ('shape_length','shape_area','shape.len','shape.length','shape_len','shape.area',shp.lower()):
+            fieldNames.append(field)
+    if includeGeometry:
+        fieldNames.append("geometry")
+    outCSV=DictWriter(out,fieldNames,extrasaction='ignore')
+    fieldObject = {}
+    for fieldName in fieldNames:
+        fieldObject[fieldName]=fieldName
+    outCSV.writerow(fieldObject)
+    return outCSV
+def prepareFile(out,featureClass,fileType,includeGeometry):
+    if fileType=="geojson":
+        return prepareGeoJson(out)
+    elif fileType=="csv":
+        return prepareCsv(out,featureClass,fileType,includeGeometry)
+    elif fileType=="json":
+        return prepareJson(out)
+def closeUp(out,fileType):
+    if fileType=="geojson" or fileType=="json":
+            out.write("""]}""")
+    out.close()
+def writeFile(outFile,featureClass,fileType,includeGeometry, first=True):
+    [shp,shpType]=getShp(featureClass)
+    fields=listFields(featureClass)
+    oid=getOID(fields)
+    sr=SpatialReference()
+    sr.loadFromString(wgs84)
+    rows=SearchCursor(featureClass,"",sr)
+    del fields[shp]
+    i=0
+    iPercent=0
+    featureCount = int(GetCount_management(featureClass).getOutput(0))
+    SetProgressor("step", "Found {0} features".format(str(featureCount)), 0, 100,1)
+    AddMessage("Found "+str(featureCount)+" features")
+    if fileType=="geojson" or includeGeometry:
+        if shpType == "point":
+            parseGeo = parsePoint
+        elif shpType == "multipoint":
+            parseGeo = parseMultiPoint
+        elif shpType == "polyline":
+            parseGeo = parseMultiLineString
+        elif shpType == "polygon":
+            parseGeo = parseMultiPolygon
+        else:
+            parseGeo = parseMultiPatch
+    try:
+        for row in rows:
+            i+=1
+            iPercent=statusMessage(featureCount,i,iPercent)
+            fc={"type": "Feature"}
+            if fileType=="geojson" or includeGeometry:
+                fc["geometry"]=parseGeo(row.getValue(shp))
+            fc["id"]=row.getValue(oid)
+            fc["properties"]=parseProp(row,fields, shp)
+            if fileType=="geojson":
+                if fc["geometry"]=={}:
+                    continue
+                if first:
+                    first=False
+                    dump(fc,outFile)
+                else:
+                    outFile.write(",")
+                    dump(fc,outFile)
+            elif fileType=="csv":
+                if includeGeometry:
+                    fc["properties"]["geometry"]=str(fc["geometry"])
+                outFile.writerow(fc["properties"])
+            elif fileType=="json":
+                if includeGeometry:
+                    fc["properties"]["geometry"]=str(fc["geometry"])
+                if first:
+                    first=False
+                    dump(fc["properties"],outFile)
+                else:
+                    outFile.write(",")
+                    dump(fc["properties"],outFile)
+    except Exception as e:
+        print("OH SNAP! " + str(e))
+    finally:
+        del row
+        del rows
+        return True
+def toOpen(featureClass, outJSON, includeGeometry="true"):
+    if not int(GetCount_management(featureClass).getOutput(0)):
+        AddMessage("No features found, skipping")
+        return
+    includeGeometry = (includeGeometry=="true")
+    if outJSON[-8:].lower()==".geojson":
+        fileType = "geojson"
+    elif outJSON[-5:].lower()==".json":
+        fileType = "json"
+    elif outJSON[-4:].lower()==".csv":
+        fileType = "csv"
+    if outJSON[-len(fileType)-1:]!="."+fileType:
+        outJSON = outJSON+"."+fileType
+    out=open(outJSON,"wb")
+    outFile=prepareFile(out,featureClass,fileType,includeGeometry)
+    writeFile(outFile,featureClass,fileType,includeGeometry)
+    closeUp(out,fileType)
