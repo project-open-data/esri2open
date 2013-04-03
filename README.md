@@ -19,15 +19,32 @@ Usage
 ------
 1. Copy the .tbx file and the .py file to any local directory
 2. With ArcGIS desktop software running (e.g. ArcCatalog), add the .tbx file to your tool box by right clicking and choosing 'Add Toolbox'.
-3. Double click on the script with the esri2open toolbox called esri2open.py to run the tool.
-4. Follow the dialog box to export 'feature classes' to CSV, JSON, or GeoJSON files
+3. Double click on the which script you want to run which are
 
-Arguments
+ESRI To Open
 ---------
-* `Feature Class`: the name of the Feature Class you wish to export
-* `Output Location`: the folder location where the output file will be generated
-* `CSV|JSON|GeoJSON`: file type you wish to create; Default is GeoJSON
-* `Delimiter`: Optional - if you select CSV, you will need to select a delimiter; the default is "|"
+Output one feature to an open format, arguments are:
+
+* `Feature Class`: the name of the Feature Class you want to export
+* `Output Dataset`: the output feature class, choose the format you want to output to here, choices are GeoJSON (default), CSV, JSON.
+* `Include Geometry`: whether to include the geometry, only used for CSV or JSON, ignored for GeoJSON.
+
+
+ESRI To Open (multiple)
+---------
+Output multiple features to an open format, arguments are:
+
+* `Features`: the names of the Feature Classes you want to export
+* `Output Folder`: the output folder.
+* `Type`: output data type, choices are want choices are GeoJSON (default), CSV, JSON
+* `Include Geometry`: whether to include the geometry, only used for CSV or JSON, ignored for GeoJSON.
+
+ESRI To Open (merge)
+---------
+Merge several feature classes into one GeoJSON file, useful for mixed geometry types:
+
+* `Feature Classes`: the names of the Feature Classes you want to export
+* `Out File`: the name of the output file.
 
 License
 -------
