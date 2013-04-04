@@ -56,4 +56,5 @@ Issues
 * This does not handle blob fields, or raster fields
 * Need to document python version; not sure how compatible it is with all current versions
 * Developed in ArcGIS 10.0
-
+* Export to sqlite
+* WKT geometry options
