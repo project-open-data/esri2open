@@ -1,6 +1,6 @@
-from arcpy import GetParameterAsText,AddMessage
+from arcpy import GetParameterAsText, AddMessage
 from esri2open import toOpen
-from os import path,sep
+from os import path, sep
 def getName(feature):
     name = path.splitext(path.split(feature)[1])
     if name[1]:
