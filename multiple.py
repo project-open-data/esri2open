@@ -14,7 +14,7 @@ def getName(feature):
 features = GetParameterAsText(0).split(";")
 outFolder = GetParameterAsText(1)
 outType = GetParameterAsText(2)
-includeGeometries = GetParameterAsText(3)
+includeGeometries = GetParameterAsText(3).lower()
 for feature in features:
     if feature[0] in ("'",'"'):
         feature = feature[1:-1]

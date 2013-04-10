@@ -1,12 +1,17 @@
+from wkt import getWKTFunc
+from wkb import getWKBFunc
+
+def getPoint(pt):
+    return [pt.X,pt.Y]
 def parseLineGeom(line):
     out=[]
     lineCount=line.count
     if lineCount ==1:
-        return ["Point",[line[0].X,line[0].Y]]
+        return ["Point",getPoint(line[0])]
     i=0
     while i<lineCount:
         pt=line[i]
-        out.append([pt.X,pt.Y])
+        out.append(getPoint(pt))
         i+=1
     if len(out)==2 and out[0]==out[1]:
         return ["Point",out[0]]
@@ -19,7 +24,7 @@ def parsePolyGeom(poly):
     while i<polyCount:
         pt=poly[i]
         if pt:
-            out.append([pt.X,pt.Y])
+            out.append(getPoint(pt))
         else:
             polys.append(out)
             out=[]
@@ -33,7 +38,7 @@ def parsePolyGeom(poly):
 def parsePoint(geometry):
     geo=dict()
     geo["type"]="Point"
-    geo["coordinates"]=[geometry.firstPoint.X,geometry.firstPoint.Y]
+    geo["coordinates"]=getPoint(geometry.firstPoint)
     return geo
 def parseMultiPoint(geometry):
     if not geometry.partCount:
@@ -48,7 +53,7 @@ def parseMultiPoint(geometry):
         i=0
         while i<pointCount:
             point=geometry.getPart(i)
-            points.append([point.X,point.Y])
+            points.append(getPoint(point))
             i+=1
         geo["coordinates"]=points
         return geo
@@ -185,14 +190,23 @@ def parseMultiPatch():
     return {}
 
 #this should probobly be a class
-def getParseFunc(shpType):
-    if shpType == "point":
-        return parsePoint
-    elif shpType == "multipoint":
-        return parseMultiPoint
-    elif shpType == "polyline":
-        return parseMultiLineString
-    elif shpType == "polygon":
-        return parseMultiPolygon
+def getParseFunc(shpType, geo):
+    if geo == "none":
+        return False
+    elif geo=="well known binary":
+        return getWKBFunc(shpType)
     else:
-        return parseMultiPatch
+        if shpType == "point":
+            fun = parsePoint
+        elif shpType == "multipoint":
+            fun = parseMultiPoint
+        elif shpType == "polyline":
+            fun = parseMultiLineString
+        elif shpType == "polygon":
+            fun = parseMultiPolygon
+        else:
+            fun = parseMultiPatch
+    if geo=="geojson":
+        return fun
+    elif geo=="well known text":
+        return getWKTFunc(fun)

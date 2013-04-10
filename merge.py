@@ -3,7 +3,7 @@ from esri2open import writeFile, prepareGeoJSON, closeJSON
 #compute the peramaters
 features = GetParameterAsText(0).split(";")
 outJSON=GetParameterAsText(1)
-includeGeometry = True
+includeGeometry = "geojson"
 fileType = "geojson"
 out=prepareGeoJSON(outJSON)
 first=True#this makes sure sure we arn't missing commas

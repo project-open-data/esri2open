@@ -61,3 +61,25 @@ def getExt(fileName):
         return split[1][1:].lower()
     else:
         return False
+
+def parseFieldType(name, esriType):
+    if esriType.lower() in ("text","string","date"):
+        return name+" text"
+    elif esriType.lower() in ("short","long"):
+        return name+" integer"
+    elif esriType.lower() in ("float","single","double"):
+        return name+" real"
+    else:
+        return name+" blob"
+
+def zm(shp):
+    desc = Describe(shp)
+    return [desc.hasZ,desc.hasM]
+
+def makeInter(n):
+    out = []
+    i = 0
+    while i<n:
+        i+=1
+        out.append("?")
+    return ",".join(out)

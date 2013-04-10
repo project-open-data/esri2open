@@ -1,4 +1,4 @@
-from utilities import listFields, getShp, getOID, statusMessage, parseProp
+from utilities import listFields, getShp, getOID, statusMessage, parseProp, makeInter
 from arcpy import SpatialReference, SearchCursor
 from parseGeometry import getParseFunc
 from json import dump
@@ -7,8 +7,8 @@ from json import dump
 wgs84="GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]];-400 -400 1000000000;-100000 10000;-100000 10000;8.98315284119522E-09;0.001;0.001;IsHighPrecision"
 
 class parse:
-    def __init__(self,outArray,featureClass,fileType,includeGeometry, first=True):
-        self.outFile = outArray[0]
+    def __init__(self,outFile,featureClass,fileType,includeGeometry, first=True):
+        self.outFile = outFile
         self.fileType = fileType
         #first we set put the local variables we'll need
         [self.shp,self.shpType]=getShp(featureClass)
@@ -23,16 +23,15 @@ class parse:
         self.first=first
         self.status = statusMessage(featureClass)
         #define the correct geometry function if we're exporting geometry
-        if fileType=="geojson" or includeGeometry:
-            self.parseGeo = getParseFunc(self.shpType)
-        else:
-            self.parseGeo = False
+        self.parseGeo = getParseFunc(self.shpType,includeGeometry)
         if fileType=="geojson":    
             self.parse = self.parseGeoJSON
         elif fileType=="csv":    
             self.parse = self.parseCSV
         elif fileType=="json":    
             self.parse = self.parseJSON
+        elif fileType=="sqlite":    
+            self.parse = self.parseSqlite
 
     def cleanUp(self,row):
         del row
@@ -48,7 +47,7 @@ class parse:
                 fc["geometry"]=self.parseGeo(row.getValue(self.shp))
             except:
                 return
-        self.outFile.writerow(fc)
+        self.outFile[0].writerow(fc)
 
     def parseGeoJSON(self,row):
         #more messages
@@ -72,7 +71,7 @@ class parse:
             #if it isn't the first feature, add a comma
             self.outFile.write(",")
             dump(fc,self.outFile)
-        
+
     def parseJSON(self,row):
         #more messages
         self.status.update()
@@ -88,3 +87,20 @@ class parse:
         else:
             self.outFile.write(",")
             dump(fc,self.outFile)
+
+    def parseSqlite(self,row):
+        #more messages
+        self.status.update()
+        fc=parseProp(row,self.fields, self.shp)
+        if self.parseGeo:
+            try:
+                fc["GEOMETRY"]=self.parseGeo(row.getValue(self.shp))
+            except:
+                return
+        keys = fc.keys()
+        values = fc.values()
+        [name,c,conn]=outFile
+        c.execute("""insert into {0}({1})
+                values({2})
+                """.format(name,", ".join(keys),makeInter(len(values))),values)
+        conn.commit()
