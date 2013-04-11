@@ -46,34 +46,39 @@ def prepareSqlite(out,featureClass,fileType,includeGeometry):
     elif shpType == "multipoint":
         gType = 4
     elif shpType == "polyline":
-        gType = 5
+        gType = 2
     elif shpType == "polygon":
-        gType = 6
+        gType = 3
     fields=listFields(featureClass)
     fieldNames = []
+    fieldNames.append("OGC_FID INTEGER PRIMARY KEY")
+    if includeGeometry:
+        fieldNames.append("GEOMETRY blob")
     for field in fields:
         if (fields[field] != u'OID') and field.lower() not in ('shape_length','shape_area','shape.len','shape.length','shape_len','shape.area',shp.lower()):
             fieldNames.append(parseFieldType(field,fields[field]))
-    if includeGeometry:
-        fieldNames.append("GEOMETRY blob")
-    conn=Connection(out.name)
+
+    conn=Connection(out)
     c=conn.cursor()
-    c.execute("""CREATE TABLE spatial_ref_sys (
-             srid INTEGER UNIQUE,
-             auth_name TEXT,
-             auth_srid INTEGER,
-             srtext TEXT  )""")
+    c.execute("""CREATE TABLE spatial_ref_sys(     
+        srid INTEGER UNIQUE,
+        auth_name TEXT,
+        auth_srid TEXT,
+        srtext TEXT
+    )""")
     c.execute("insert into spatial_ref_sys(srid ,auth_name ,auth_srid ,srtext) values(?,?,?,?)",(4326, u'EPSG', 4326, u'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'))
-    name = splitext(split(out.name)[1])[0]
+    name = splitext(split(out)[1])[0]
     c.execute("""CREATE TABLE geometry_columns (
-            f_table_name TEXT, 
-            f_geometry_column TEXT, 
-            geometry_type INTEGER, 
-            coord_dimension INTEGER, 
-            srid INTEGER,
-            geometry_format TEXT )""")
-    c.execute("""insert into geometry_columns( f_table_name, f_geometry_column, geometry_type, coord_dimension, srid,geometry_format) values(?,?,?,?,?,?)""",(name,"GEOMETRY",gType,2,4326))
+        f_table_name VARCHAR,
+        f_geometry_column VARCHAR,
+        geometry_type INTEGER,
+        coord_dimension INTEGER,
+        srid INTEGER,
+        geometry_format VARCHAR
+    )""")
+    c.execute("""insert into geometry_columns( f_table_name, f_geometry_column, geometry_type, coord_dimension, srid, geometry_format) values(?,?,?,?,?,?)""",(name,"GEOMETRY",gType,2,4326,"WKB"))
     c.execute("create table {0}({1})".format(name,", ".join(fieldNames)))
+    conn.commit()
     return [name,c,conn]
 def prepareGeoJSON(outJSON,*args):
     out = open(outJSON,"wb")
@@ -154,7 +159,7 @@ def toOpen(featureClass, outJSON, includeGeometry="geojson"):
     if fileType=="geojson":
         includeGeometry="geojson"
     elif fileType=="sqlite":
-        includeGeometry="well know binary"
+        includeGeometry="well known binary"
     else:
         includeGeometry=includeGeometry.lower()
     #open up the file

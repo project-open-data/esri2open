@@ -1,5 +1,5 @@
 from utilities import listFields, getShp, getOID, statusMessage, parseProp, makeInter
-from arcpy import SpatialReference, SearchCursor
+from arcpy import SpatialReference, SearchCursor  
 from parseGeometry import getParseFunc
 from json import dump
 
@@ -24,6 +24,7 @@ class parse:
         self.status = statusMessage(featureClass)
         #define the correct geometry function if we're exporting geometry
         self.parseGeo = getParseFunc(self.shpType,includeGeometry)
+        self.i=0
         if fileType=="geojson":    
             self.parse = self.parseGeoJSON
         elif fileType=="csv":    
@@ -92,6 +93,8 @@ class parse:
         #more messages
         self.status.update()
         fc=parseProp(row,self.fields, self.shp)
+        self.i=self.i+1
+        fc["OGC_FID"]=self.i
         if self.parseGeo:
             try:
                 fc["GEOMETRY"]=self.parseGeo(row.getValue(self.shp))
@@ -99,7 +102,7 @@ class parse:
                 return
         keys = fc.keys()
         values = fc.values()
-        [name,c,conn]=outFile
+        [name,c,conn]=self.outFile
         c.execute("""insert into {0}({1})
                 values({2})
                 """.format(name,", ".join(keys),makeInter(len(values))),values)

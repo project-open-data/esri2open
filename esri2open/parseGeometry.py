@@ -193,8 +193,6 @@ def parseMultiPatch():
 def getParseFunc(shpType, geo):
     if geo == "none":
         return False
-    elif geo=="well known binary":
-        return getWKBFunc(shpType)
     else:
         if shpType == "point":
             fun = parsePoint
@@ -208,5 +206,7 @@ def getParseFunc(shpType, geo):
             fun = parseMultiPatch
     if geo=="geojson":
         return fun
+    elif geo=="well known binary":
+        return getWKBFunc(shpType)
     elif geo=="well known text":
         return getWKTFunc(fun)

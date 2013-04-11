@@ -28,7 +28,7 @@ def linearRing(coordinates):
     return out
 def makePoint(c):
     values = ["<BI",1,1]
-    [ptrn,coords] = pts(c)
+    [ptrn,coords] = pts(c.getPart(0))
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))
