@@ -3,13 +3,13 @@ from sqlite3 import Binary
 def pts(c):
     return ["dd",[c.X,c.Y]]
 def linearRing(coordinates):
-    partCount=coordinates.partCount
+    partCount=coordinates.count
     i=0
     values =[0]
     outnum = "I"
     out = ["I",[0]]
     while i<partCount:
-        pt = coordinates.getPart(i)
+        pt = coordinates[i]
         if pt:
             [ptrn,c]=pts(pt)
             outnum+=ptrn
@@ -40,13 +40,13 @@ def makeMultiPoint(c):
     return Binary(pack(*values))
 def makeMultiLineString(c):
     values = ["<BI",1,5]
-    [ptrn,coords]=linearRing(c)
+    [ptrn,coords]=linearRing(c.getPart(0))
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))
 def makeMultiPolygon(c):
     values = ["<BI",1,6]
-    [ptrn,coords]=linearRing(c)
+    [ptrn,coords]=linearRing(c.getPart(0))
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))
