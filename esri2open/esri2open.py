@@ -15,7 +15,7 @@
 from arcpy import AddMessage, GetCount_management
 from utilities import getExt
 from parseRow import parse
-from json import dump
+from prepare import prepareFile
 
 #----
 #close file
