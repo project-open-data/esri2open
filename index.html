@@ -1,0 +1,135 @@
+<!DOCTYPE html><html><head><title></title><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" /><link href='big.css' rel='stylesheet' type='text/css' /><script src='showdown.js'></script><script src='big.js'></script></head><body>
+<span id="md">
+Convert ESRI to GeoJSON
+
+so you have some data in SDE
+
+and want to use it on the internet
+
+_let's just use ArcGIS online..._
+
+said nobody
+
+you want to use it in
+
+![tilemill](http://mapbox.com/tilemill/img/hero-tilemill.png)_TileMill_
+
+or
+
+![leaflet](http://farm9.staticflickr.com/8527/8680357801_712bc7e350_o_d.png)leaflet
+
+And you like having fieldnames longer then 8 charicters
+
+I'll just convert to geojson, it's similar right?
+
+![differences](https://pbs.twimg.com/media/BF0YSy2CEAAJYcH.png:large)_no_
+
+ESRI has 4 geometry types
+
+point
+
+multipoint
+
+polyline
+
+polygon
+
+GeoJSON has those
+
+but calls them Point, MultiPoint, LineString, and Polygon
+
+GeoJSON also has
+
+MultiLineString, MultiPolygon, and GeometryCollection
+
+ESRI a geometry type for the feature class and all features to have that or null
+
+GeoJSON requires it to be anything except null
+
+So I wrote an arcpy script to automate the export
+
+and then got distracted after finishing 95%
+
+But then
+
+![Michael Byrne](https://secure.gravatar.com/avatar/b57972826b35359132d2952182aa0b0e?s=1200)Michael Byrnes started his
+
+Now I MUST finish mine
+
+and/or merge our efforts
+
+anywho back to the point
+
+that 5% I had left to solve
+
+_inner rings_
+
+GeoJSON has an array with the first feature being the outer and the rest being the inner rings
+
+ESRI has a bunch of points, some of them are null
+
+you have to check the existence of eveyr point
+
+![what inner rings think of you](http://farm9.staticflickr.com/8383/8680565639_7e37a973e0_o_d.png)
+
+ESRI requires first and last point of a polygon to be the same
+
+i.e. repeat point
+
+_SO DOES GEOJSON FTW!!!1_
+
+ESRI allows polygones with a total of less then 4 points
+
+NO SANE FRAMEWORK DOES THIS!
+
+it also allows lines with only one point
+
+which means you have polygons that could be lines or points
+
+and lines that could be points
+
+and while were at it, ESRI allows multi points with only one point
+
+and makes no distinction between multi and regular for line and poly
+
+but some parts of a single multipoly could be a line
+
+and some a point
+
+and some a poly
+
+_solution_
+
+waterfall model
+
+parsePolygone either returns geo or calls parseLinestring
+
+etc with line->point
+
+fallback to next type
+
+and if a multi and mixed
+
+_GeometryCollection FTW_
+
+of course going backwards
+
+![geojson to esri](https://pbs.twimg.com/media/BF0btM5CIAUvXwC.png:large)_Have Fun_
+
+_fin_
+
+[github.com/calvinmetcalf/esri2open](https://github.com/calvinmetcalf/esri2open)
+[github.com/feomike/esri2open](https://github.com/feomike/esri2open)
+[calvinmetcalf.github.io/esri2open](http://calvinmetcalf.github.io/esri2open)
+[@cwmma](https://twitter.com/CWMma)
+</span>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-40454900-1', 'github.io');
+  ga('send', 'pageview');
+
+</script>
