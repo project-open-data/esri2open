@@ -66,7 +66,7 @@ def getExt(fileName):
 def parseFieldType(name, esriType):
     if esriType.lower() in ("text","string","date"):
         return name+" text"
-    elif esriType.lower() in ("short","long"):
+    elif esriType.lower() in ("short","long","integer"):
         return name+" integer"
     elif esriType.lower() in ("float","single","double"):
         return name+" real"
