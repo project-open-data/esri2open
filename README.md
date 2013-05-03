@@ -1,7 +1,7 @@
 esri2open
 =========
 
-This repo is an ESRI toolbox and tool(s) that exports ESRI Feature Classes to open data formats, CSV, JSON, and GeoJSON.
+This repo is an ESRI toolbox and tool(s) that exports ESRI Feature Classes to open data formats, CSV, JSON, SQLITE, and GeoJSON.
 
 What Problem This Solves
 ------------------------
@@ -26,8 +26,8 @@ ESRI To Open
 Output one feature to an open format, arguments are:
 
 * `Feature Class`: the name of the Feature Class you want to export
-* `Output Dataset`: the output feature class, choose the format you want to output to here, choices are GeoJSON (default), CSV, JSON.
-* `Include Geometry`: whether to include the geometry, only used for CSV or JSON, ignored for GeoJSON.
+* `Output Dataset`: the output feature class, choose the format you want to output to here, choices are GeoJSON (default), CSV, JSON, and SQLITE.
+* `Geometry Type`: choices are Default, GeoJSON, WKT, and None, defaults to GeoJSON, ignored if the file is output to GeoJSON or SQLITE.
 
 
 ESRI To Open (multiple)
@@ -36,8 +36,8 @@ Output multiple features to an open format, arguments are:
 
 * `Features`: the names of the Feature Classes you want to export
 * `Output Folder`: the output folder.
-* `Type`: output data type, choices are want choices are GeoJSON (default), CSV, JSON
-* `Include Geometry`: whether to include the geometry, only used for CSV or JSON, ignored for GeoJSON.
+* `Type`: output data type, choices are want choices are GeoJSON (default), CSV, JSON, SQLITE
+* `Geometry Type`: choices are Default, GeoJSON, WKT, and None, defaults to GeoJSON, ignored if the file is output to GeoJSON or SQLITE.
 
 ESRI To Open (merge)
 ---------
@@ -56,5 +56,3 @@ Issues
 * This does not handle blob fields, or raster fields
 * Need to document python version; not sure how compatible it is with all current versions
 * Developed in ArcGIS 10.0
-* Export to sqlite
-* WKT geometry options
