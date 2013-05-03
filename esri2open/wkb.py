@@ -73,19 +73,17 @@ def linearRing(coordinates):
 def multiRing(coordinates):
     partCount=coordinates.partCount
     i=0
-    values =[0]
-    outnum = "I"
     out = ["I",[0]]
     while i<partCount:
         part = coordinates.getPart(i)
         [ptrn,c]=linearRing(part)
-        outnum+=ptrn
-        values[0]+=1
-        values.extend(c)
+        out[0]+="BI"
+        out[0]+=ptrn
+        out[1][0]+=1
+        out[1].extend([1,3])
+        out[1].extend(c)
         i+=1
-    out[0]+=outnum
-    out[1][0]+=1
-    out[1].extend(values)
+    return out
     return out
 def makePoint(c):
     values = ["<BI",1,1]
@@ -112,8 +110,14 @@ def makeMultiLineString(c):
     values.extend(coords)
     return Binary(pack(*values))
 def makeMultiPolygon(c):
-    values = ["<BI",1,3]
-    [ptrn,coords]=linearRing(c.getPart(0))
+    if c.partCount==1:
+        values = ["<BI",1,3]
+        [ptrn,coords]=linearRing(c.getPart(0))
+    elif c.partCount>1:
+        values = ["<BI",1,6]
+        [ptrn,coords]=multiRing(c)
+    else:
+        return False
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))
