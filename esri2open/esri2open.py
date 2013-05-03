@@ -75,7 +75,7 @@ def toOpen(featureClass, outJSON, includeGeometry="geojson"):
     if fileType=="geojson":
         includeGeometry="geojson"
     elif fileType=="sqlite":
-        includeGeometry="well know binary"
+        includeGeometry="well known binary"
     else:
         includeGeometry=includeGeometry.lower()
     #open up the file

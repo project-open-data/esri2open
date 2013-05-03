@@ -1,5 +1,6 @@
 from wkt import getWKTFunc
 from wkb import getWKBFunc
+from arcpy import AddMessage
 
 def getPoint(pt):
     return [pt.X,pt.Y]
@@ -191,8 +192,13 @@ def parseMultiPatch():
 
 #this should probobly be a class
 def getParseFunc(shpType, geo):
+    AddMessage(shpType)
+    AddMessage(geo)
     if geo == "none":
         return False
+    elif geo=="well known binary":
+        AddMessage("wkb")
+        return getWKBFunc(shpType)
     else:
         if shpType == "point":
             fun = parsePoint
@@ -206,7 +212,5 @@ def getParseFunc(shpType, geo):
             fun = parseMultiPatch
     if geo=="geojson":
         return fun
-    elif geo=="well known binary":
-        return getWKBFunc(shpType)
     elif geo=="well known text":
         return getWKTFunc(fun)
