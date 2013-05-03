@@ -2,6 +2,32 @@ from struct import pack
 from sqlite3 import Binary
 def pts(c):
     return ["dd",[c.X,c.Y]]
+def pt4mp(c):
+    return ["Bidd",[1,1,c.X,c.Y]]
+def mp(coordinates):
+    partCount=coordinates.partCount
+    i=0
+    out = ["I",[0]]
+    while i<partCount:
+        pt = coordinates.getPart(i)
+        [ptrn,c]=pt4mp(pt)
+        out[0]+=ptrn
+        out[1][0]+=1
+        out[1].extend(c)
+        i+=1
+    return out
+def lineSt(coordinates):
+    partCount=coordinates.count
+    i=0
+    out = ["I",[0]]
+    while i<partCount:
+        pt = coordinates[i]
+        [ptrn,c]=pts(pt)
+        out[0]+=ptrn
+        out[1][0]+=1
+        out[1].extend(c)
+        i+=1
+    return out
 def linearRing(coordinates):
     partCount=coordinates.count
     i=0
@@ -51,19 +77,19 @@ def makePoint(c):
     return Binary(pack(*values))
 def makeMultiPoint(c):
     values = ["<BI",1,4]
-    [ptrn,coords]=linearRing(c)
+    [ptrn,coords]=mp(c)
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))
 def makeMultiLineString(c):
-    values = ["<BI",1,5]
-    [ptrn,coords]=multiRing(c)
+    values = ["<BI",1,2]
+    [ptrn,coords]=lineSt(c.getPart(0))
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))
 def makeMultiPolygon(c):
-    values = ["<BI",1,6]
-    [ptrn,coords]=multiRing(c)
+    values = ["<BI",1,3]
+    [ptrn,coords]=linearRing(c.getPart(0))
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))

@@ -27,9 +27,9 @@ def prepareSqlite(out,featureClass,fileType,includeGeometry):
     elif shpType == "multipoint":
         gType = 4
     elif shpType == "polyline":
-        gType = 5
+        gType = 2
     elif shpType == "polygon":
-        gType = 6
+        gType = 3
     fields=listFields(featureClass)
     fieldNames = []
     fieldNames.append("OGC_FID INTEGER PRIMARY KEY")
