@@ -5,11 +5,10 @@
 # Federal Communications Commission
 # exports the feature classes for any feature class to
 # a csv file, JSON file or geoJSON file 
-# also adding edits from sgillies and Shaun Walbridge
+# also adding edits from sgillies, Shaun Walbridge, and Calvin Metcalf
 # updates include using the python json.dumps method and indentation issues
-# Edit by Calvin Metcalf to merge in improvments made for exporting
-# Massachusetts Department Of Transportation Data
-# edits made 4/8/2013
+# merge of Calvin's esri2geo and export to sqlite
+# last edits made 5/4/2013
 # ---------------------------------------------------------------------------
 #imports
 from arcpy import AddMessage, GetCount_management
