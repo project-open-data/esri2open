@@ -9,7 +9,7 @@ def prepareCSV(outJSON,featureClass,fileType,includeGeometry):
     fieldNames = []
     out = open(outJSON,"wb")
     for field in fields:
-        if (fields[field] != u'OID') and field.lower() not in ('shape_length','shape_area','shape.len','shape.length','shape_len','shape.area',shp.lower()):
+        if (fields[field] != u'OID') and field.lower() !=shp.lower():
             fieldNames.append(field)
     if includeGeometry!="none":
         fieldNames.append("geometry")
@@ -36,7 +36,7 @@ def prepareSqlite(out,featureClass,fileType,includeGeometry):
     if includeGeometry:
         fieldNames.append("GEOMETRY blob")
     for field in fields:
-        if (fields[field] != u'OID') and field.lower() not in ('shape_length','shape_area','shape.len','shape.length','shape_len','shape.area',shp.lower()):
+        if (fields[field] != u'OID') and field.lower() !=shp.lower():
             fieldNames.append(parseFieldType(field,fields[field]))
 
     conn=Connection(out)

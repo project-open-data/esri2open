@@ -9,7 +9,8 @@ def listFields(featureClass):
     fields=ListFields(featureClass)
     out=dict()
     for fld in fields:
-        out[fld.name]=fld.type
+        if (fld.name.lower() not in ('shape_length','shape_area','shape.len','shape.length','shape_len','shape.area') and fld.name.find(".")==-1):
+            out[fld.name]=fld.type
     return out
 
 #takes the input geometry object and returns
