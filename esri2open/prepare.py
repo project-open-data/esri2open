@@ -41,23 +41,11 @@ def prepareSqlite(out,featureClass,fileType,includeGeometry):
 
     conn=Connection(out)
     c=conn.cursor()
-    c.execute("""CREATE TABLE spatial_ref_sys(     
-        srid INTEGER UNIQUE,
-        auth_name TEXT,
-        auth_srid TEXT,
-        srtext TEXT
-    )""")
-    c.execute("insert into spatial_ref_sys(srid ,auth_name ,auth_srid ,srtext) values(?,?,?,?)",(4326, u'EPSG', 4326, u'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'))
     name = splitext(split(out)[1])[0]
-    c.execute("""CREATE TABLE geometry_columns (
-        f_table_name VARCHAR,
-        f_geometry_column VARCHAR,
-        geometry_type INTEGER,
-        coord_dimension INTEGER,
-        srid INTEGER,
-        geometry_format VARCHAR
-    )""")
+    c.execute("""CREATE TABLE geometry_columns (     f_table_name VARCHAR,      f_geometry_column VARCHAR,      geometry_type INTEGER,      coord_dimension INTEGER,      srid INTEGER,     geometry_format VARCHAR )""")
     c.execute("""insert into geometry_columns( f_table_name, f_geometry_column, geometry_type, coord_dimension, srid, geometry_format) values(?,?,?,?,?,?)""",(name,"GEOMETRY",gType,2,4326,"WKB"))
+    c.execute("""CREATE TABLE spatial_ref_sys        (     srid INTEGER UNIQUE,     auth_name TEXT,     auth_srid TEXT,     srtext TEXT)""")
+    c.execute("insert into spatial_ref_sys(srid ,auth_name ,auth_srid ,srtext) values(?,?,?,?)",(4326, u'EPSG', 4326, u'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'))
     c.execute("create table {0}({1})".format(name,", ".join(fieldNames)))
     return [name,c,conn]
 def prepareGeoJSON(outJSON,*args):

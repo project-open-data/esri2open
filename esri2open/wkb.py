@@ -26,6 +26,23 @@ def linearRing(coordinates):
     out[1][0]+=1
     out[1].extend(values)
     return out
+def multiRing(coordinates):
+    partCount=coordinates.partCount
+    i=0
+    values =[0]
+    outnum = "I"
+    out = ["I",[0]]
+    while i<partCount:
+        part = coordinates.getPart(i)
+        [ptrn,c]=linearRing(part)
+        outnum+=ptrn
+        values[0]+=1
+        values.extend(c)
+        i+=1
+    out[0]+=outnum
+    out[1][0]+=1
+    out[1].extend(values)
+    return out
 def makePoint(c):
     values = ["<BI",1,1]
     [ptrn,coords] = pts(c.getPart(0))
@@ -40,18 +57,16 @@ def makeMultiPoint(c):
     return Binary(pack(*values))
 def makeMultiLineString(c):
     values = ["<BI",1,5]
-    [ptrn,coords]=linearRing(c.getPart(0))
+    [ptrn,coords]=multiRing(c)
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))
 def makeMultiPolygon(c):
     values = ["<BI",1,6]
-    [ptrn,coords]=linearRing(c.getPart(0))
+    [ptrn,coords]=multiRing(c)
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))
-
-
 
 def getWKBFunc(type):
     if type == "point":
