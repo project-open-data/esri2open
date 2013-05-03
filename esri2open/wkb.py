@@ -28,6 +28,20 @@ def lineSt(coordinates):
         out[1].extend(c)
         i+=1
     return out
+def multiLine(coordinates):
+    partCount=coordinates.partCount
+    i=0
+    out = ["I",[0]]
+    while i<partCount:
+        part = coordinates.getPart(i)
+        [ptrn,c]=lineSt(part)
+        out[0]+="BI"
+        out[0]+=ptrn
+        out[1][0]+=1
+        out[1].extend([1,2])
+        out[1].extend(c)
+        i+=1
+    return out
 def linearRing(coordinates):
     partCount=coordinates.count
     i=0
@@ -42,12 +56,16 @@ def linearRing(coordinates):
             values[0]+=1
             values.extend(c)
         else:
+            if values[0]<4:
+                return False
             out[0]+=outnum
             out[1][0]+=1
             out[1].extend(values)
             values =[0]
             outnum = "I"
         i+=1
+    if values[0]<4:
+        return False 
     out[0]+=outnum
     out[1][0]+=1
     out[1].extend(values)
@@ -82,8 +100,14 @@ def makeMultiPoint(c):
     values.extend(coords)
     return Binary(pack(*values))
 def makeMultiLineString(c):
-    values = ["<BI",1,2]
-    [ptrn,coords]=lineSt(c.getPart(0))
+    if c.partCount==1:
+        values = ["<BI",1,2]
+        [ptrn,coords]=lineSt(c.getPart(0))
+    elif c.partCount>1:
+        values = ["<BI",1,5]
+        [ptrn,coords]=multiLine(c)
+    else:
+        return False
     values[0]+=ptrn
     values.extend(coords)
     return Binary(pack(*values))

@@ -27,7 +27,7 @@ def prepareSqlite(out,featureClass,fileType,includeGeometry):
     elif shpType == "multipoint":
         gType = 4
     elif shpType == "polyline":
-        gType = 2
+        gType = 5
     elif shpType == "polygon":
         gType = 3
     fields=listFields(featureClass)
