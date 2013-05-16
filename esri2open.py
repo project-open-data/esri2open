@@ -83,7 +83,7 @@ def wrtiteJSON(myOF):
         for myF in arcpy.ListFields(theIF):
             fCnt = int(len(arcpy.ListFields(theIF)))    
             #if you are a shape field, so something special w/ it
-            if myF.name == "Shape": 
+            if myF.name.lower() == "shape": 
                 if theOType == "GeoJSON": # avoid globals!
                     myField = "geometry"
                     myGeomStr = myGeomStr + writeGeom(row.getValue(myF.name)) + "}"
