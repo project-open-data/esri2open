@@ -1,7 +1,7 @@
 esri2open
 =========
 
-This repo is an ESRI toolbox and tool(s) that exports ESRI Feature Classes to open data formats, CSV, JSON, SQLITE, and GeoJSON.
+This repo is an ESRI toolbox and tool(s) that exports ESRI Feature Classes to open data formats, CSV, JSON, SQLite, and GeoJSON.
 
 What Problem This Solves
 ------------------------
