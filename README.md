@@ -48,7 +48,7 @@ Merge several feature classes into one GeoJSON file, useful for mixed geometry t
 
 License
 -------
-GPLv3 or later.
+MIT
 
 Issues
 ------
