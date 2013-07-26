@@ -55,7 +55,7 @@ def prepareGeoJSON(outJSON,*args):
     
 def prepareJSON(outJSON,*args):
     out = open(outJSON,"wb")
-    out.write("""{"rows":[""")
+    out.write("""{"docs":[""")
     return out
 
 def prepareFile(outJSON,featureClass,fileType,includeGeometry):
