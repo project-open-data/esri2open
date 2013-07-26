@@ -8,7 +8,7 @@
 # also adding edits from sgillies, Shaun Walbridge, and Calvin Metcalf
 # updates include using the python json.dumps method and indentation issues
 # merge of Calvin's esri2geo and export to sqlite
-# last edits made 5/4/2013
+# last edits made 7/26/2013
 # ---------------------------------------------------------------------------
 #imports
 from arcpy import AddMessage, GetCount_management
