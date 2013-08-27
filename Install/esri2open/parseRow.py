@@ -1,4 +1,4 @@
-from utilities import listFields, getShp, getOID, statusMessage, parseProp, makeInter
+from utilities import listFields, getShp, getOID, statusMessage, parseProp, makeInter,getFileName
 from arcpy import SpatialReference, SearchCursor  
 from parseGeometry import getParseFunc
 from json import dump
@@ -33,6 +33,10 @@ class parse:
             self.parse = self.parseJSON
         elif fileType=="sqlite":    
             self.parse = self.parseSqlite
+        elif fileType=="topojson":    
+            self.parse = self.parseTOPOJSON
+            self.oName = getFileName(self.outFile['out'])
+            self.topo = self.outFile['topo'].object_factory(self.oName)
 
     def cleanUp(self,row):
         del row
@@ -72,6 +76,23 @@ class parse:
             #if it isn't the first feature, add a comma
             self.outFile.write(",")
             dump(fc,self.outFile)
+
+    def parseTOPOJSON(self,row):
+        #more messages
+        self.status.update()
+        fc={"type": "Feature"}
+        if self.parseGeo:
+            try:
+                fc["geometry"]=self.parseGeo(row.getValue(self.shp))
+            except:
+                return
+        else:
+            raise NameError("we need geometry for geojson")
+        fc["id"]=row.getValue(self.oid)
+        fc["properties"]=parseProp(row,self.fields, self.shp)
+        if fc["geometry"]=={}:
+            return
+        self.topo(fc)
 
     def parseJSON(self,row):
         #more messages

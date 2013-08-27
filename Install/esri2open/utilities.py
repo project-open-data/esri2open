@@ -1,5 +1,5 @@
 from arcpy import ListFields,Describe,SetProgressorLabel,SetProgressorPosition,GetCount_management, SetProgressor, AddMessage
-from os.path import splitext
+from os.path import splitext, split
 
 #utility functions we will call more then once
 
@@ -62,7 +62,9 @@ def getExt(fileName):
         return split[1][1:].lower()
     else:
         return False
-
+def getFileName(path):
+    if path.endswith('.topojson'):
+        return split(path)[1][:-9]
 def parseFieldType(name, esriType):
     if esriType.lower() in ("text","string","date"):
         return name+" text"

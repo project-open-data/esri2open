@@ -2,6 +2,7 @@ from csv import DictWriter
 from utilities import listFields,getShp, parseFieldType
 from sqlite3 import Connection
 from os.path import splitext, split
+from topojson import Topology
 
 def prepareCSV(outJSON,featureClass,fileType,includeGeometry):
     shp=getShp(featureClass)[0]
@@ -57,6 +58,10 @@ def prepareJSON(outJSON,*args):
     out = open(outJSON,"wb")
     out.write("""{"docs":[""")
     return out
+
+def prepareTOPO(outJSON,*args):
+    topo = Topology()
+    return {"topo":topo,'out':outJSON}
 
 def prepareFile(outJSON,featureClass,fileType,includeGeometry):
     if fileType == "geojson":    

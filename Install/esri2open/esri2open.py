@@ -33,13 +33,21 @@ def closeCSV(out):
     out[1].close()
     return True
 
+def closeTOPOJSON(out):
+    file = open(out['out'],'w')
+    out['topo'].dump(file)
+    file.close()
+    return True
+
 def closeUp(out,fileType):
     if fileType == "geojson":    
         return closeJSON(out)
     elif fileType == "csv":    
         return closeCSV(out)
-    if fileType == "json":    
+    elif fileType == "json":    
         return closeJSON(out)
+    elif fileType == "tpojson":    
+        return closeTOPOJSON(out)
     else:
         return False
 
@@ -71,7 +79,7 @@ def toOpen(featureClass, outJSON, includeGeometry="geojson"):
         AddMessage("this filetype doesn't make sense")
         return
     #geojson needs geometry
-    if fileType=="geojson":
+    if fileType in ("geojson", "topojson"):
         includeGeometry="geojson"
     elif fileType=="sqlite":
         includeGeometry="well known binary"
