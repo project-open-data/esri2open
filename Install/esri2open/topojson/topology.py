@@ -14,6 +14,7 @@ from json import dump,dumps
 from functools import partial
 from stitchpoles import Stitch
 from bounds import Bounds
+from arcpy import AddMessage
 def property_transform (outprop, key, inprop):
         outprop[key]=inprop
         return True
@@ -126,8 +127,10 @@ class Topology:
                     del geometry['coordinates']
                 return geometry;
         self.topo = Topo(self.ln,self.id_func,self.property_transform)
+        AddMessage('looping through ' +str(self.feature_length)+' features again')
         for db in self.feature_db:
             for i in self.feature_db[db]:
+                AddMessage('on '+str(i))
                 self.tweak(self.feature_db[db],i)
     def dump(self,f):
         self.start()
@@ -141,7 +144,11 @@ class Topology:
         },f)
         #print('dumping objects')
         f.write(',"objects":')
+        i =0
+        AddMessage('one last time')
         for thing in self.get_objects():
+            i+=1
+            AddMessage('on ' + str(i) + ' for the last time')
             f.write(thing)
         #print('dumping arcs')
         f.write(',"arcs":[')
