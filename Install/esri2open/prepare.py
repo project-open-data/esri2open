@@ -72,5 +72,7 @@ def prepareFile(outJSON,featureClass,fileType,includeGeometry):
         return prepareJSON(outJSON,featureClass,fileType,includeGeometry)
     elif fileType == "sqlite": 
         return prepareSqlite(outJSON,featureClass,fileType,includeGeometry)
+    elif fileType == "topojson": 
+        return prepareTOPO(outJSON,featureClass,fileType,includeGeometry)
     else:
         return False

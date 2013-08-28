@@ -46,7 +46,7 @@ def closeUp(out,fileType):
         return closeCSV(out)
     elif fileType == "json":    
         return closeJSON(out)
-    elif fileType == "tpojson":    
+    elif fileType == "topojson":    
         return closeTOPOJSON(out)
     else:
         return False
