@@ -130,7 +130,7 @@ class Topology:
         AddMessage('looping through ' +str(self.feature_length)+' features again')
         for db in self.feature_db:
             for i in self.feature_db[db]:
-                AddMessage('on '+str(i))
+                #AddMessage('on '+str(i))
                 self.tweak(self.feature_db[db],i)
     def dump(self,f):
         self.start()
@@ -148,7 +148,7 @@ class Topology:
         AddMessage('one last time')
         for thing in self.get_objects():
             i+=1
-            AddMessage('on ' + str(i) + ' for the last time')
+            #AddMessage('on ' + str(i) + ' for the last time')
             f.write(thing)
         #print('dumping arcs')
         f.write(',"arcs":[')
