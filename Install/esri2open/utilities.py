@@ -1,6 +1,15 @@
 from arcpy import ListFields,Describe,SetProgressorLabel,SetProgressorPosition,GetCount_management, SetProgressor, AddMessage
 from os.path import splitext, split
 
+def getName(feature):
+    name = path.splitext(path.split(feature)[1])
+    if name[1]:
+        if name[1]==".shp":
+            return name[0]
+        else:
+            return name[1][1:]
+    else:
+        return name[0]
 #utility functions we will call more then once
 
 #takes the input feature class and returns a dict with 

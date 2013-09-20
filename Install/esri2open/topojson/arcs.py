@@ -29,6 +29,7 @@ class Arcs:
         self.length+=1
         return self.length
     def close(self):
+        #pass
         self.db.close()
         remove(self.storage_path)
         self.arcs.close()

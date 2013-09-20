@@ -52,8 +52,8 @@ def closeUp(out,fileType):
         return False
 
 #this is the meat of the function, we could put it into a seperate file if we wanted
-def writeFile(outArray,featureClass,fileType,includeGeometry, first=True):
-    parser = parse(outArray,featureClass,fileType,includeGeometry,first)
+def writeFile(outArray,featureClass,fileType,includeGeometry, first=True, outName = False):
+    parser = parse(outArray,featureClass,fileType,includeGeometry,first,outName)
     #wrap it in a try so we don't lock the database
     try:
         for row in parser.rows:

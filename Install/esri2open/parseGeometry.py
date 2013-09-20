@@ -206,7 +206,8 @@ def getParseFunc(shpType, geo):
             fun = parseMultiPolygon
         else:
             fun = parseMultiPatch
-    if geo=="geojson":
-        return fun
-    elif geo=="well known text":
+
+    if geo=="well known text":
         return getWKTFunc(fun)
+    else:
+        return fun

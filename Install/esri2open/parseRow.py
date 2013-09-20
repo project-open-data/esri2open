@@ -7,7 +7,7 @@ from json import dump
 wgs84="GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]];-400 -400 1000000000;-100000 10000;-100000 10000;8.98315284119522E-09;0.001;0.001;IsHighPrecision"
 
 class parse:
-    def __init__(self,outFile,featureClass,fileType,includeGeometry, first=True):
+    def __init__(self,outFile,featureClass,fileType,includeGeometry, first=True, outName=False):
         self.outFile = outFile
         self.fileType = fileType
         #first we set put the local variables we'll need
@@ -35,7 +35,10 @@ class parse:
             self.parse = self.parseSqlite
         elif fileType=="topojson":    
             self.parse = self.parseTOPOJSON
-            self.oName = getFileName(self.outFile['out'])
+            if outName:
+                self.oName=outName
+            else:
+                self.oName = getFileName(featureClass)
             self.topo = self.outFile['topo'].object_factory(self.oName)
 
     def cleanUp(self,row):
@@ -87,7 +90,7 @@ class parse:
             except:
                 return
         else:
-            raise NameError("we need geometry for geojson")
+            raise NameError("we need geometry for topojson")
         fc["id"]=row.getValue(self.oid)
         fc["properties"]=parseProp(row,self.fields, self.shp)
         if fc["geometry"]=={}:
