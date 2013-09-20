@@ -27,4 +27,5 @@ class Clock:
             r=rings[i]
             if self.area(rings[i]) > 0:
                 r=list(reversed(r))
+            i+=1
         return rings
