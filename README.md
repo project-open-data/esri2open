@@ -26,8 +26,8 @@ ESRI To Open
 Output one feature to an open format, arguments are:
 
 * `Feature Class`: the name of the Feature Class you want to export
-* `Output Dataset`: the output feature class, choose the format you want to output to here, choices are GeoJSON (default), CSV, JSON, and SQLite.
-* `Geometry Type`: choices are Default, GeoJSON, WKT, and None, defaults to GeoJSON, ignored if the file is output to GeoJSON or SQLite.
+* `Output Dataset`: the output feature class, choose the format you want to output to here, choices are GeoJSON (default), TopoJSON, CSV, JSON, and SQLite.
+* `Geometry Type`: choices are Default, GeoJSON, WKT, and None, defaults to GeoJSON, ignored if the file is output to GeoJSON, TopoJSON, or SQLite.
 
 
 ESRI To Open (multiple)
@@ -36,15 +36,15 @@ Output multiple features to an open format, arguments are:
 
 * `Features`: the names of the Feature Classes you want to export
 * `Output Folder`: the output folder.
-* `Type`: output data type, choices are want choices are GeoJSON (default), CSV, JSON, SQLite
-* `Geometry Type`: choices are Default, GeoJSON, WKT, and None, defaults to GeoJSON, ignored if the file is output to GeoJSON or SQLite.
+* `Type`: output data type, choices are want choices are GeoJSON (default), TopoJSON, CSV, JSON, SQLite
+* `Geometry Type`: choices are Default, GeoJSON, WKT, and None, defaults to GeoJSON, ignored if the file is output to GeoJSON, TopoJSON, or SQLite.
 
 ESRI To Open (merge)
 ---------
-Merge several feature classes into one GeoJSON file, useful for mixed geometry types:
+Merge several feature classes into one GeoJSON or TopoJSON file, useful for mixed geometry types:
 
 * `Feature Classes`: the names of the Feature Classes you want to export
-* `Out File`: the name of the output file.
+* `Out File`: the name of the output file extension determines whether the outfile is GeoJSON or TopoJSON.
 
 License
 -------
