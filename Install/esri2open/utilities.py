@@ -2,7 +2,7 @@ from arcpy import ListFields,Describe,SetProgressorLabel,SetProgressorPosition,G
 from os.path import splitext, split
 
 def getName(feature):
-    name = path.splitext(path.split(feature)[1])
+    name = splitext(split(feature)[1])
     if name[1]:
         if name[1]==".shp":
             return name[0]

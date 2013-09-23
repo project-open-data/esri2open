@@ -1,4 +1,4 @@
-from utilities import listFields, getShp, getOID, statusMessage, parseProp, makeInter,getFileName
+from utilities import listFields, getShp, getOID, statusMessage, parseProp, makeInter,getName
 from arcpy import SpatialReference, SearchCursor  
 from parseGeometry import getParseFunc
 from json import dump
@@ -38,7 +38,7 @@ class parse:
             if outName:
                 self.oName=outName
             else:
-                self.oName = getFileName(featureClass)
+                self.oName = getName(featureClass)
             self.topo = self.outFile['topo'].object_factory(self.oName)
 
     def cleanUp(self,row):
