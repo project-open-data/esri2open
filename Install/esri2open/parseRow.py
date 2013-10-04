@@ -55,6 +55,9 @@ class parse:
                 fc["geometry"]=self.parseGeo(row.getValue(self.shp))
             except:
                 return
+        for key in fc:
+            if isinstance(fc[key],unicode):
+                fc[key] = fc[key].encode('utf_8')
         self.outFile[0].writerow(fc)
 
     def parseGeoJSON(self,row):
