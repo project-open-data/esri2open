@@ -77,7 +77,6 @@ class Topology:
         [self.kx,self.ky]=make_ks(self.quantization,self.bounds.x0,self.bounds.x1,self.bounds.y0,self.bounds.y1)
         self.quant = Quantize(self.bounds.x0,self.bounds.y0,self.kx,self.ky,self.system.distance)
         self.clock = Clock(self.system.ring_area)
-        polygon = lambda poly:map(self.ln.line_closed,poly)
         #Convert features to geometries, and stitch together arcs.
         class Topo(Types):
             def __init__(self,ln,id_func,property_transform):
@@ -101,7 +100,7 @@ class Topology:
             def GeometryCollection(self,collection):
                 collection['geometries'] = map(self.geometry,collection['geometries'])
             def MultiPolygon(self,multiPolygon):
-                multiPolygon['arcs'] = map(polygon,multiPolygon['coordinates'])
+                multiPolygon['arcs'] = map(poly:map(self.ln.line_closed,poly),multiPolygon['coordinates'])
             def Polygon(self,polygon):
                  polygon['arcs'] = map(self.ln.line_closed,polygon['coordinates'])
             def MultiLineString(self,multiLineString):
