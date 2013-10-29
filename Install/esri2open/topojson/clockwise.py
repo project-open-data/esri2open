@@ -16,16 +16,12 @@ class Clock:
         return geo
     def clockwise_polygon(self,rings):
         i=0
-        n=0
         r = rings[i]
         if len(rings):
             n=len(rings)
-            if self.area(r)<0:
-                r=list(reversed(r))
-        i+=1
-        while i<n:
-            r=rings[i]
-            if self.area(rings[i]) > 0:
-                r=list(reversed(r))
-            i+=1
+            while i<n:
+                r=rings[i]
+                if self.area(rings[i]) > 0:
+                    r=list(reversed(r))
+                i+=1
         return rings

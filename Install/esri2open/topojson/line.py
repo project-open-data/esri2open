@@ -23,7 +23,7 @@ class Line:
         self.line_arcs = [];
         n = len(points)
         current_arc = Strut()
-        k = 1
+        k = 0
         p=False
         t=False
         if not opened:
@@ -52,11 +52,11 @@ class Line:
                     point0 = point
                     k = i
                 i+=1
-        i = 0
+        i = -1
         if opened:
-            m = n
+            m = n-1
         else:
-            m = n+1
+            m = n
         while i < m:
             i+=1
             point = points[(i + k) % n]
