@@ -9,19 +9,17 @@ class Clock:
         return feature
     def clock_geometry(self,geo):
         if 'type' in geo:
-            if geo['type']=='Polygon':
+            if geo['type']=='Polygon' or geo['type']=='MultiLineString':
                 geo['coordinates'] = self.clockwise_polygon(geo['coordinates'])
             elif geo['type']=='MultiPolygon':
                 geo['coordinates'] = map(lambda x:self.clockwise_polygon(x),geo['coordinates'])
+            elif geo['type']=='LineString':
+                geo['coordinates'] = self.clockwise_ring(geo['coordinates'])
         return geo
     def clockwise_polygon(self,rings):
-        i=0
-        r = rings[i]
-        if len(rings):
-            n=len(rings)
-            while i<n:
-                r=rings[i]
-                if self.area(rings[i]) > 0:
-                    r=list(reversed(r))
-                i+=1
-        return rings
+        return map(lambda x:self.clockwise_ring(x),rings)
+    def clockwise_ring(self,ring):
+        if self.area(ring) > 0:
+            return list(reversed(ring))
+        else:
+            return ring

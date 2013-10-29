@@ -100,7 +100,7 @@ class Topology:
             def GeometryCollection(self,collection):
                 collection['geometries'] = map(self.geometry,collection['geometries'])
             def MultiPolygon(self,multiPolygon):
-                multiPolygon['arcs'] = map(poly:map(self.ln.line_closed,poly),multiPolygon['coordinates'])
+                multiPolygon['arcs'] = map(lambda poly:map(self.ln.line_closed,poly),multiPolygon['coordinates'])
             def Polygon(self,polygon):
                  polygon['arcs'] = map(self.ln.line_closed,polygon['coordinates'])
             def MultiLineString(self,multiLineString):
