@@ -33,19 +33,27 @@ def closeCSV(out):
     out[1].close()
     return True
 
+def closeTOPOJSON(out):
+    file = open(out['out'],'w')
+    out['topo'].dump(file)
+    file.close()
+    return True
+
 def closeUp(out,fileType):
     if fileType == "geojson":    
         return closeJSON(out)
     elif fileType == "csv":    
         return closeCSV(out)
-    if fileType == "json":    
+    elif fileType == "json":    
         return closeJSON(out)
+    elif fileType == "topojson":    
+        return closeTOPOJSON(out)
     else:
         return False
 
 #this is the meat of the function, we could put it into a seperate file if we wanted
-def writeFile(outArray,featureClass,fileType,includeGeometry, first=True):
-    parser = parse(outArray,featureClass,fileType,includeGeometry,first)
+def writeFile(outArray,featureClass,fileType,includeGeometry, first=True, outName = False):
+    parser = parse(outArray,featureClass,fileType,includeGeometry,first,outName)
     #wrap it in a try so we don't lock the database
     try:
         for row in parser.rows:
@@ -71,7 +79,7 @@ def toOpen(featureClass, outJSON, includeGeometry="geojson"):
         AddMessage("this filetype doesn't make sense")
         return
     #geojson needs geometry
-    if fileType=="geojson":
+    if fileType in ("geojson", "topojson"):
         includeGeometry="geojson"
     elif fileType=="sqlite":
         includeGeometry="well known binary"

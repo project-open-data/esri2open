@@ -1,4 +1,4 @@
-from utilities import listFields, getShp, getOID, statusMessage, parseProp, makeInter
+from utilities import listFields, getShp, getOID, statusMessage, parseProp, makeInter,getName
 from arcpy import SpatialReference, SearchCursor  
 from parseGeometry import getParseFunc
 from json import dump
@@ -7,7 +7,7 @@ from json import dump
 wgs84="GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]];-400 -400 1000000000;-100000 10000;-100000 10000;8.98315284119522E-09;0.001;0.001;IsHighPrecision"
 
 class parse:
-    def __init__(self,outFile,featureClass,fileType,includeGeometry, first=True):
+    def __init__(self,outFile,featureClass,fileType,includeGeometry, first=True, outName=False):
         self.outFile = outFile
         self.fileType = fileType
         #first we set put the local variables we'll need
@@ -33,6 +33,13 @@ class parse:
             self.parse = self.parseJSON
         elif fileType=="sqlite":    
             self.parse = self.parseSqlite
+        elif fileType=="topojson":    
+            self.parse = self.parseTOPOJSON
+            if outName:
+                self.oName=outName
+            else:
+                self.oName = getName(featureClass)
+            self.topo = self.outFile['topo'].object_factory(self.oName)
 
     def cleanUp(self,row):
         del row
@@ -48,6 +55,9 @@ class parse:
                 fc["geometry"]=self.parseGeo(row.getValue(self.shp))
             except:
                 return
+        for key in fc:
+            if isinstance(fc[key],unicode):
+                fc[key] = fc[key].encode('utf_8')
         self.outFile[0].writerow(fc)
 
     def parseGeoJSON(self,row):
@@ -72,6 +82,23 @@ class parse:
             #if it isn't the first feature, add a comma
             self.outFile.write(",")
             dump(fc,self.outFile)
+
+    def parseTOPOJSON(self,row):
+        #more messages
+        self.status.update()
+        fc={"type": "Feature"}
+        if self.parseGeo:
+            try:
+                fc["geometry"]=self.parseGeo(row.getValue(self.shp))
+            except:
+                return
+        else:
+            raise NameError("we need geometry for topojson")
+        fc["id"]=row.getValue(self.oid)
+        fc["properties"]=parseProp(row,self.fields, self.shp)
+        if fc["geometry"]=={}:
+            return
+        self.topo(fc)
 
     def parseJSON(self,row):
         #more messages

@@ -1,16 +1,6 @@
 from arcpy import GetParameterAsText, AddMessage
-from esri2open import toOpen
+from esri2open import toOpen, getName
 from os import path, sep
-def getName(feature):
-    name = path.splitext(path.split(feature)[1])
-    if name[1]:
-        if name[1]==".shp":
-            return name[0]
-        else:
-            return name[1][1:]
-    else:
-        return name[0]
-    
 features = GetParameterAsText(0).split(";")
 outFolder = GetParameterAsText(1)
 outType = GetParameterAsText(2)
